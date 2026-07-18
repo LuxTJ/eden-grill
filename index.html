@@ -2,30 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eden Grill — OKC</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Eden Grill POS</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .hero .note {
-    font-size: 0.8rem; font-style: italic; color: var(--text-secondary);
-    max-width: 420px; margin: 0.25rem auto 2rem;
-  }
-  .promo-row { display: flex; gap: 0.5rem; margin: 1rem 0 0.25rem; }
-  .promo-row input { flex: 1; padding: 0.6rem 0.75rem; background: #000; color: #fff; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; text-transform: uppercase; }
-  .promo-row input:focus { outline: none; border-color: #45BEFC; }
-  .promo-btn { padding: 0.6rem 1rem; background: #222; color: #fff; border: 1px solid #333; border-radius: 8px; font-weight: 600; cursor: pointer; }
-  .promo-btn:hover { background: #333; }
-  .promo-msg { font-size: 0.8rem; min-height: 1.1rem; margin-bottom: 0.25rem; }
-  .promo-msg.ok { color: #28a745; }
-  .promo-msg.err { color: #dc3545; }
-  .cart-total .cart-strike { color: var(--text-secondary); text-decoration: line-through; font-size: 0.9rem; font-weight: 400; margin-right: 0.5rem; }
-
-  /* Receipt print area — hidden on screen, shown only when printing */
   #print-area { display: none; }
   @media print {
-    /* Remove everything except the receipts from layout so the (tall) menu
-       doesn't generate blank pages. display:none removes layout height;
-       visibility:hidden would keep it and print extra blank sheets. */
     html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
     body > *:not(#print-area) { display: none !important; }
     #print-area { display: block !important; }
@@ -41,415 +23,424 @@
     .receipt .r-total { font-weight: 700; font-size: 14px; }
     .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
   }
-
-  /* Printer settings panel */
-  .printer-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 0.4rem; display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
-  .printer-btn svg { width: 22px; height: 22px; }
-  .printer-dot { width: 9px; height: 9px; border-radius: 50%; background: #dc3545; display: inline-block; }
-  .printer-dot.on { background: #28a745; }
-  .printer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 1200; padding: 1rem; }
-  .printer-modal.active { display: flex; }
-  .printer-card { background: #111; border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 420px; padding: 1.25rem; color: #fff; }
-  .printer-card h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
-  .printer-card .sub { color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 1rem; }
-  .printer-status { display: flex; align-items: center; gap: 0.5rem; background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 0.9rem; margin-bottom: 1rem; }
-  .printer-actions { display: flex; flex-direction: column; gap: 0.6rem; }
-  .printer-actions button { padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #333; background: #1c1c1c; color: #fff; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-  .printer-actions button:hover { background: #262626; }
-  .printer-actions button.primary { background: #45BEFC; color: #000; border-color: #45BEFC; }
-  .printer-actions button.danger { background: #2a1414; border-color: #5a2a2a; color: #ff8a8a; }
-  .printer-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
-  .paper-row { display: flex; gap: 0.5rem; margin: 1rem 0 0.25rem; }
-  .paper-row button { flex: 1; padding: 0.55rem; border-radius: 8px; border: 1px solid #333; background: #1c1c1c; color: #fff; cursor: pointer; font-size: 0.85rem; }
-  .paper-row button.sel { background: #45BEFC; color: #000; border-color: #45BEFC; font-weight: 700; }
-  .printer-note { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.9rem; line-height: 1.4; }
-  .printer-msg { font-size: 0.82rem; min-height: 1.1rem; margin: 0.5rem 0 0; }
-  .printer-msg.err { color: #ff8a8a; }
-  .printer-msg.ok { color: #28a745; }
-  .printer-close { float: right; background: none; border: none; color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<header class="hero">
-<div class="hero-bg"></div>
-<div class="hero-overlay"></div>
-<div class="hero-content">
-<div class="logo-circle">
-<img src="logo.png" alt="Eden Grill">
-</div>
-<h1>Eden Grill</h1>
-<p class="subtitle">OKC</p>
-<p class="location-badge">Friday &amp; Saturday · 10:00 am – 1:00 am</p>
-<p class="note">Menu subject to change after 8:30pm · Please allow 20–30 min — food is made to order.</p>
-</div>
+<header class="pos-header">
+  <div class="pos-header-left">
+    <img src="logo.png" alt="Eden Grill" class="pos-logo">
+    <div class="pos-brand">
+      <h1>Eden Grill</h1>
+      <span class="pos-location">OKC</span>
+    </div>
+  </div>
+  <div class="pos-header-right">
+    <button class="pos-btn pos-btn-ghost" onclick="openPrinter()" title="Printer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span class="printer-dot" id="printer-dot"></span>
+    </button>
+    <div class="pos-time" id="pos-time"></div>
+  </div>
 </header>
 
-<nav class="bottom-nav" style="justify-content: space-between;">
-<button class="printer-btn" onclick="openPrinter()" title="Printer settings">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-<span class="printer-dot" id="printer-dot"></span>
-</button>
-<button class="cart-btn" onclick="showCart()">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-<span class="cart-count" id="cart-count">0</span>
-</button>
-</nav>
+<main class="pos-main" id="pos-main"></main>
+
+<div class="order-bar" id="order-bar" onclick="openCart()">
+  <div class="order-bar-inner">
+    <div class="order-bar-left">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+      <span class="order-bar-count" id="order-bar-count">0 items</span>
+    </div>
+    <div class="order-bar-total" id="order-bar-total">$0.00</div>
+  </div>
+</div>
+
+<!-- Modifier Modal -->
+<div class="modal-overlay" id="modifier-modal">
+  <div class="modifier-panel">
+    <div class="modifier-header">
+      <h2 id="modifier-title">Item</h2>
+      <div class="modifier-price" id="modifier-price">$0</div>
+      <button class="modal-close" onclick="closeModifiers()">✕</button>
+    </div>
+    <div class="modifier-body" id="modifier-body"></div>
+    <div class="modifier-footer">
+      <div class="qty-row">
+        <button class="qty-btn" onclick="modQty(-1)">−</button>
+        <span class="qty-val" id="mod-qty">1</span>
+        <button class="qty-btn" onclick="modQty(1)">+</button>
+      </div>
+      <div class="mod-total" id="mod-total">$0.00</div>
+      <button class="add-btn" id="mod-add-btn" onclick="addFromModifier()">Add to Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cart Modal -->
+<div class="modal-overlay" id="cart-modal">
+  <div class="cart-panel">
+    <div class="cart-header">
+      <div>
+        <h2>Current Order</h2>
+        <div class="cart-meta"><span id="cart-order-num"></span> · <span id="cart-timestamp"></span></div>
+      </div>
+      <button class="modal-close" onclick="closeCart()">✕</button>
+    </div>
+    <div class="cart-customer">
+      <label>Customer Name</label>
+      <input type="text" id="customer-name" placeholder="Name for ticket" autocomplete="off">
+    </div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-promo">
+      <input type="text" id="promo-input" placeholder="Promo code" autocomplete="off">
+      <button onclick="applyPromo()">Apply</button>
+    </div>
+    <div class="promo-msg" id="promo-msg"></div>
+    <div class="cart-summary">
+      <div class="cart-summary-row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
+      <div class="cart-summary-row cart-summary-discount" id="cart-discount-row" style="display:none"><span>Discount</span><span id="cart-discount">-$0.00</span></div>
+      <div class="cart-summary-row cart-summary-total"><span>TOTAL</span><span id="cart-total">$0.00</span></div>
+    </div>
+    <button class="pay-btn" onclick="placeOrder()">Pay Cash &amp; Print</button>
+  </div>
+</div>
+
+<!-- Order Confirmation -->
+<div class="modal-overlay" id="order-confirmation">
+  <div class="confirm-panel">
+    <div class="confirm-check">✓</div>
+    <h2>Order Placed!</h2>
+    <p id="confirmation-text"></p>
+    <button class="pay-btn" onclick="closeConfirmation()">Done</button>
+  </div>
+</div>
+
+<!-- Printer Settings Modal -->
+<div class="modal-overlay" id="printer-modal">
+  <div class="modifier-panel" style="max-width:400px">
+    <div class="modifier-header">
+      <h2>Receipt Printer</h2>
+      <button class="modal-close" onclick="closePrinter()">✕</button>
+    </div>
+    <div class="printer-settings">
+      <div class="printer-status-row">
+        <span class="printer-dot" id="printer-status-dot"></span>
+        <span id="printer-status-text">Not connected</span>
+      </div>
+      <button class="printer-action-btn primary" id="btn-usb" onclick="connectPrinter('usb')">Connect USB Printer</button>
+      <button class="printer-action-btn primary" id="btn-bt" onclick="connectPrinter('bluetooth')">Connect Bluetooth Printer</button>
+      <button class="printer-action-btn" id="btn-test" onclick="testPrint()">Print Test Receipt</button>
+      <button class="printer-action-btn danger" id="btn-disc" onclick="disconnectPrinter()">Disconnect</button>
+      <div class="printer-msg" id="printer-msg"></div>
+      <div class="paper-select">
+        <button id="paper-58" onclick="setPaper(32)">58mm</button>
+        <button id="paper-80" onclick="setPaper(48)">80mm</button>
+      </div>
+      <p class="printer-note" id="printer-support-note"></p>
+    </div>
+  </div>
+</div>
 
 <div id="print-area"></div>
-
-<div class="printer-modal" id="printer-modal">
-<div class="printer-card">
-<button class="printer-close" onclick="closePrinter()">×</button>
-<h2>Receipt Printer</h2>
-<p class="sub">Connect a thermal printer to print receipts directly. No connection = the browser print dialog is used instead.</p>
-<div class="printer-status">
-<span class="printer-dot" id="printer-status-dot"></span>
-<span id="printer-status-text">Not connected</span>
-</div>
-<div class="printer-actions">
-<button id="btn-usb" class="primary" onclick="connectPrinter('usb')">Connect USB printer</button>
-<button id="btn-bt" class="primary" onclick="connectPrinter('bluetooth')">Connect Bluetooth printer</button>
-<button id="btn-test" onclick="testPrint()">Print test receipt</button>
-<button id="btn-disc" class="danger" onclick="disconnectPrinter()">Disconnect</button>
-</div>
-<div class="printer-msg" id="printer-msg"></div>
-<div class="paper-row">
-<button id="paper-58" onclick="setPaper(32)">58 mm paper</button>
-<button id="paper-80" onclick="setPaper(48)">80 mm paper</button>
-</div>
-<p class="printer-note" id="printer-support-note"></p>
-</div>
-</div>
-
-<main id="menu-root" style="max-width: 720px; margin: 0 auto; padding: 1rem 1rem 6rem;"></main>
-
-<div class="cart-modal" id="cart-modal">
-<div class="cart-content">
-<div class="cart-header">
-<h2>Your Order</h2>
-<button class="close-cart" onclick="closeCart()">×</button>
-</div>
-<div class="cart-items" id="cart-items"></div>
-<div class="promo-row">
-<input type="text" id="promo-input" placeholder="Promo code (optional)" autocomplete="off">
-<button type="button" class="promo-btn" onclick="applyPromo()">Apply</button>
-</div>
-<div class="promo-msg" id="promo-msg"></div>
-<div class="cart-total" id="cart-total">Total: $0</div>
-<div class="customer-form">
-<h3>Order Details</h3>
-<label>Name (for the order ticket)</label>
-<input type="text" id="customer-name" placeholder="Customer name">
-<label>Payment</label>
-<div style="padding:0.6rem 0.75rem;background:#000;border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:0.9rem;">Cash — collected at the counter</div>
-</div>
-<button class="checkout-btn" onclick="placeOrder()">Pay Cash &amp; Print</button>
-</div>
-</div>
-
-<div class="order-confirmation" id="order-confirmation">
-<div class="confirmation-content">
-<div class="checkmark">✓</div>
-<h2>Order Placed!</h2>
-<p id="confirmation-text"></p>
-<button class="checkout-btn" onclick="closeConfirmation()">Done</button>
-</div>
-</div>
 
 <script src="printer.js"></script>
 <script>
 const STORAGE_KEY = 'edenGrillOrders';
 
-const SECTION_TITLES = {
-  onBread: "ON BREAD",
-  onTortilla: "ON TORTILLA",
-  onFry: "ON FRY",
-  drinks: "DRINKS & SNACKS",
-  combos: "COMBO MEALS",
-  lateNight: "LATE NIGHT MENU · 9:00pm – 1:00am"
+const SECTION_META = {
+  onBread:    { label: 'ON BREAD',    icon: '🍔' },
+  onTortilla: { label: 'ON TORTILLA', icon: '🌮' },
+  onFry:      { label: 'ON FRY',      icon: '🍟' },
+  combos:     { label: 'COMBOS',      icon: '📋' },
+  drinks:     { label: 'DRINKS & SNACKS', icon: '🥤' }
 };
 
-let cart = [];
-
-// Promo codes: code -> fraction off (0.5 = 50% off, 1 = 100% off). Case-insensitive.
 const PROMO_CODES = { 'STAFF69': 0.5, 'MGR69': 1 };
-let appliedPromo = null; // { code, rate }
+let appliedPromo = null;
+let menuData = {};
+let cart = [];
+let modItem = null;
+let modItemKey = '';
+let modQtyVal = 1;
 
-function applyPromo() {
-  const input = document.getElementById('promo-input');
-  const msg = document.getElementById('promo-msg');
-  const code = input.value.trim().toUpperCase();
-  if (!code) { appliedPromo = null; msg.className = 'promo-msg'; msg.textContent = ''; showCart(); return; }
-  if (PROMO_CODES[code] !== undefined) {
-    appliedPromo = { code, rate: PROMO_CODES[code] };
-    msg.className = 'promo-msg ok';
-    msg.textContent = `Applied ${code} — ${Math.round(appliedPromo.rate * 100)}% off`;
+function updateClock() {
+  const el = document.getElementById('pos-time');
+  if (el) el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+setInterval(updateClock, 10000);
+updateClock();
+
+function renderAll() {
+  const main = document.getElementById('pos-main');
+  var html = '';
+  Object.keys(SECTION_META).forEach(function(key) {
+    var items = menuData[key] || [];
+    if (items.length === 0) return;
+    html += '<div class="pos-section">' +
+      '<div class="pos-section-header">' + SECTION_META[key].icon + ' ' + SECTION_META[key].label + '</div>' +
+      '<div class="pos-section-items">';
+    items.forEach(function(item, i) {
+      var itemKey = key + '-' + i;
+      html += '<button class="item-card" onclick="openModifier(\'' + itemKey + '\', ' + i + ')">' +
+        '<div class="item-card-name">' + item.name + '</div>' +
+        '<div class="item-card-price">$' + item.price + '</div>' +
+      '</button>';
+    });
+    html += '</div></div>';
+  });
+  main.innerHTML = html;
+}
+
+function openModifier(key, idx) {
+  var parts = key.split('-');
+  var cat = parts[0];
+  var i = parseInt(parts[1]);
+  var item = menuData[cat][i];
+  modItem = item;
+  modItemKey = key;
+  modQtyVal = 1;
+
+  document.getElementById('modifier-title').textContent = item.name;
+  document.getElementById('modifier-price').textContent = '$' + item.price;
+  document.getElementById('mod-qty').textContent = '1';
+
+  var body = document.getElementById('modifier-body');
+  if (!item.optionGroups || item.optionGroups.length === 0) {
+    body.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:2rem 0;">No modifiers — tap Add to Order</p>';
   } else {
-    appliedPromo = null;
-    msg.className = 'promo-msg err';
-    msg.textContent = 'Invalid promo code';
+    body.innerHTML = item.optionGroups.map(function(group, gi) {
+      var isRadio = group.type === 'radio';
+      var options = group.options.map(function(opt, oi) {
+        var isObj = typeof opt === 'object';
+        var name = isObj ? opt.name : opt;
+        var price = isObj ? opt.price : 0;
+        var inputName = isRadio ? 'mod-g' + gi : 'mod-g' + gi + '-' + oi;
+        return '<label class="mod-option">' +
+          '<input type="' + (isRadio ? 'radio' : 'checkbox') + '" name="' + inputName + '" value="' + name + '"' +
+          (price ? ' data-price="' + price + '"' : '') +
+          (isRadio && oi === 0 ? ' checked' : '') +
+          ' onchange="updateModTotal()">' +
+          '<span class="mod-option-text">' + name + (price > 0 ? ' <em>(+$' + price + ')</em>' : '') + '</span>' +
+        '</label>';
+      }).join('');
+      return '<div class="mod-group">' +
+        '<div class="mod-group-label">' + group.label + '</div>' +
+        options +
+      '</div>';
+    }).join('');
   }
-  showCart();
+
+  updateModTotal();
+  document.getElementById('modifier-modal').classList.add('active');
 }
 
-function renderItem(item, itemId) {
-  const groups = item.optionGroups || [];
-  return `
-    <div class="menu-item" data-id="${itemId}">
-      <div class="menu-item-header" onclick="toggleOptions('${itemId}')">
-        <div class="menu-item-info">
-          <div class="menu-item-name">${item.name}</div>
-          ${item.description ? `<div class="menu-item-description">${item.description}</div>` : ''}
-        </div>
-        <div class="menu-item-price">$${item.price}</div>
-      </div>
-      <div class="menu-item-options" id="options-${itemId}">
-        ${groups.map((group, gi) => `
-          <div class="option-group">
-            <div class="option-label">${group.label}</div>
-            ${group.options.map((opt, oi) => {
-              const isObj = typeof opt === 'object';
-              const name = isObj ? opt.name : opt;
-              const price = isObj ? opt.price : 0;
-              const inputType = group.type === 'radio' ? 'radio' : 'checkbox';
-              const inputName = inputType === 'radio' ? `${itemId}-g${gi}` : `${itemId}-g${gi}-${oi}`;
-              return `
-                <label class="option-checkbox">
-                  <input type="${inputType}" name="${inputName}" value="${name}" ${price ? `data-price="${price}"` : ''} ${inputType === 'radio' && oi === 0 ? 'checked' : ''} onchange="updateTotal('${itemId}', ${item.price})">
-                  <span>${name}${price > 0 ? ` (+$${price})` : ''}</span>
-                </label>
-              `;
-            }).join('')}
-          </div>
-        `).join('')}
-        <div class="item-total" id="total-${itemId}">Total: $${item.price}</div>
-        <div class="quantity-control">
-          <button type="button" class="qty-btn" onclick="changeQty('${itemId}', -1, ${item.price})">-</button>
-          <span class="qty-display" id="qty-${itemId}">1</span>
-          <button type="button" class="qty-btn" onclick="changeQty('${itemId}', 1, ${item.price})">+</button>
-        </div>
-        <button class="add-to-cart-btn" onclick="addToCart('${itemId}', '${item.name.replace(/'/g, "\\'")}', ${item.price})">Add to Order</button>
-      </div>
-    </div>
-  `;
+function closeModifiers() {
+  document.getElementById('modifier-modal').classList.remove('active');
 }
 
-function toggleOptions(itemId) {
-  const el = document.getElementById(`options-${itemId}`);
-  if (!el) return;
-  const open = el.style.display === 'block';
-  el.style.display = open ? 'none' : 'block';
-  document.querySelector(`[data-id="${itemId}"]`).classList.toggle('expanded', !open);
+function modQty(delta) {
+  modQtyVal = Math.max(1, modQtyVal + delta);
+  document.getElementById('mod-qty').textContent = modQtyVal;
+  updateModTotal();
 }
 
-function unitTotal(itemId, basePrice) {
-  const item = document.querySelector(`[data-id="${itemId}"]`);
-  let total = basePrice;
-  item.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => total += parseFloat(cb.dataset.price || 0));
+function modUnitTotal() {
+  var total = modItem.price;
+  var modal = document.getElementById('modifier-body');
+  modal.querySelectorAll('input[type="checkbox"]:checked').forEach(function(cb) {
+    total += parseFloat(cb.dataset.price || 0);
+  });
   return total;
 }
 
-function updateTotal(itemId, basePrice) {
-  const qty = parseInt(document.getElementById(`qty-${itemId}`).innerText) || 1;
-  const el = document.getElementById(`total-${itemId}`);
-  if (el) el.textContent = `Total: $${(unitTotal(itemId, basePrice) * qty).toFixed(2)}`;
+function updateModTotal() {
+  var unit = modUnitTotal();
+  document.getElementById('mod-total').textContent = '$' + (unit * modQtyVal).toFixed(2);
 }
 
-function changeQty(itemId, delta, basePrice) {
-  const qtyEl = document.getElementById(`qty-${itemId}`);
-  let qty = parseInt(qtyEl.innerText) + delta;
-  if (qty < 1) qty = 1;
-  qtyEl.innerText = qty;
-  updateTotal(itemId, basePrice);
+function addFromModifier() {
+  var modal = document.getElementById('modifier-body');
+  var radios = Array.from(modal.querySelectorAll('input[type="radio"]:checked')).map(function(r) { return r.value; });
+  var checks = Array.from(modal.querySelectorAll('input[type="checkbox"]:checked')).map(function(c) { return c.value; });
+  cart.push({
+    name: modItem.name,
+    options: radios.concat(checks),
+    unitTotal: modUnitTotal(),
+    quantity: modQtyVal
+  });
+  closeModifiers();
+  updateOrderBar();
 }
 
-function addToCart(itemId, itemName, basePrice) {
-  const item = document.querySelector(`[data-id="${itemId}"]`);
-  const qty = parseInt(document.getElementById(`qty-${itemId}`).innerText) || 1;
-  const radios = Array.from(item.querySelectorAll('input[type="radio"]:checked')).map(r => r.value);
-  const checks = Array.from(item.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
-  cart.push({ name: itemName, options: radios.concat(checks), unitTotal: unitTotal(itemId, basePrice), quantity: qty });
-  document.getElementById(`qty-${itemId}`).innerText = 1;
-  updateTotal(itemId, basePrice);
-  updateCartCount();
-  const btn = item.querySelector('.add-to-cart-btn');
-  const orig = btn.textContent;
-  btn.textContent = 'Added!';
-  btn.style.background = '#28a745';
-  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1000);
+function updateOrderBar() {
+  var count = cart.reduce(function(s, i) { return s + i.quantity; }, 0);
+  var total = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
+  document.getElementById('order-bar-count').textContent = count + ' item' + (count !== 1 ? 's' : '');
+  document.getElementById('order-bar-total').textContent = '$' + total.toFixed(2);
 }
 
-function updateCartCount() { document.getElementById('cart-count').textContent = cart.length; }
-
-function showCart() {
-  const modal = document.getElementById('cart-modal');
-  const cartItems = document.getElementById('cart-items');
+function openCart() {
+  var now = new Date();
+  document.getElementById('cart-order-num').textContent = 'ORD-' + Date.now().toString().slice(-6);
+  document.getElementById('cart-timestamp').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  var items = document.getElementById('cart-items');
   if (cart.length === 0) {
-    cartItems.innerHTML = '<p style="text-align:center; color: var(--text-secondary); padding: 2rem 0;">No items added yet</p>';
+    items.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:2rem 0;">No items yet</p>';
   } else {
-    cartItems.innerHTML = cart.map((item, i) => `
-      <div class="cart-item">
-        <div class="cart-item-header">
-          <div class="cart-item-name">${item.name} <span class="cart-qty-badge">x${item.quantity}</span></div>
-          <button class="remove-item-btn" onclick="removeFromCart(${i})">Remove</button>
-        </div>
-        ${item.options.length ? `<div class="cart-item-options">${item.options.join(', ')}</div>` : ''}
-        <div class="cart-item-total">$${(item.unitTotal * item.quantity).toFixed(2)}</div>
-      </div>
-    `).join('');
+    items.innerHTML = cart.map(function(item, i) {
+      return '<div class="cart-item">' +
+        '<div class="cart-item-top">' +
+          '<span class="cart-item-qty">x' + item.quantity + '</span>' +
+          '<span class="cart-item-name">' + item.name + '</span>' +
+          '<span class="cart-item-price">$' + (item.unitTotal * item.quantity).toFixed(2) + '</span>' +
+        '</div>' +
+        (item.options.length ? '<div class="cart-item-opts">' + item.options.join(', ') + '</div>' : '') +
+        '<button class="cart-item-remove" onclick="removeFromCart(' + i + ')">Remove</button>' +
+      '</div>';
+    }).join('');
   }
-  const subtotal = cart.reduce((s, i) => s + i.unitTotal * i.quantity, 0);
-  const totalEl = document.getElementById('cart-total');
+  var subtotal = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
+  document.getElementById('cart-subtotal').textContent = '$' + subtotal.toFixed(2);
+  var discRow = document.getElementById('cart-discount-row');
   if (appliedPromo) {
-    const final = subtotal * (1 - appliedPromo.rate);
-    totalEl.innerHTML = `<span class="cart-strike">$${subtotal.toFixed(2)}</span>Total: $${final.toFixed(2)} <span style="font-size:0.8rem;color:#28a745;">(${appliedPromo.code})</span>`;
+    var disc = subtotal * appliedPromo.rate;
+    document.getElementById('cart-discount').textContent = '-$' + disc.toFixed(2);
+    document.getElementById('cart-total').textContent = '$' + (subtotal - disc).toFixed(2);
+    discRow.style.display = '';
   } else {
-    totalEl.textContent = `Total: $${subtotal.toFixed(2)}`;
+    discRow.style.display = 'none';
+    document.getElementById('cart-total').textContent = '$' + subtotal.toFixed(2);
   }
-  modal.classList.add('active');
+  document.getElementById('cart-modal').classList.add('active');
 }
 
-function removeFromCart(i) { cart.splice(i, 1); updateCartCount(); showCart(); }
 function closeCart() { document.getElementById('cart-modal').classList.remove('active'); }
-function closeConfirmation() { document.getElementById('order-confirmation').classList.remove('active'); }
+function removeFromCart(i) { cart.splice(i, 1); updateOrderBar(); openCart(); }
+
+function applyPromo() {
+  var input = document.getElementById('promo-input');
+  var msg = document.getElementById('promo-msg');
+  var code = input.value.trim().toUpperCase();
+  if (!code) { appliedPromo = null; msg.textContent = ''; msg.className = 'promo-msg'; openCart(); return; }
+  if (PROMO_CODES[code] !== undefined) {
+    appliedPromo = { code: code, rate: PROMO_CODES[code] };
+    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
+    msg.className = 'promo-msg ok';
+  } else {
+    appliedPromo = null;
+    msg.textContent = 'Invalid code';
+    msg.className = 'promo-msg err';
+  }
+  openCart();
+}
 
 async function placeOrder() {
-  const name = document.getElementById('customer-name').value.trim();
-  if (!name) { alert('Please enter a name for the order ticket'); return; }
-  if (cart.length === 0) { alert('Please add at least one item to the order'); return; }
-  const subtotal = cart.reduce((s, i) => s + i.unitTotal * i.quantity, 0);
-  const rate = appliedPromo ? appliedPromo.rate : 0;
-  const discount = +(subtotal * rate).toFixed(2);
-  const total = +(subtotal - discount).toFixed(2);
-  const order = {
+  var name = document.getElementById('customer-name').value.trim();
+  if (!name) { alert('Enter a name for the order ticket'); return; }
+  if (cart.length === 0) { alert('Add at least one item'); return; }
+  var subtotal = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
+  var rate = appliedPromo ? appliedPromo.rate : 0;
+  var discount = +(subtotal * rate).toFixed(2);
+  var total = +(subtotal - discount).toFixed(2);
+  var order = {
     id: 'ORD-' + Date.now().toString().slice(-6),
     location: 'okc',
-    customer: { name },
-    items: cart.map(i => ({ name: i.name, options: i.options, quantity: i.quantity, total: i.unitTotal * i.quantity })),
-    subtotal, discount, promoCode: appliedPromo ? appliedPromo.code : null,
-    total, payment: 'cash', paid: true,
+    customer: { name: name },
+    items: cart.map(function(i) { return { name: i.name, options: i.options, quantity: i.quantity, total: i.unitTotal * i.quantity }; }),
+    subtotal: subtotal, discount: discount, promoCode: appliedPromo ? appliedPromo.code : null,
+    total: total, payment: 'cash', paid: true,
     timestamp: new Date().toISOString()
   };
-  // Keep a local log of the day's orders on this device (no backend needed).
-  const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   all.push(order);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 
-  // Print both receipts (customer copy + kitchen copy).
-  // Prefer a connected thermal printer (USB/Bluetooth); fall back to the browser print dialog.
-  let printedVia = 'browser';
-  const printerReady = window.EdenPrinter && EdenPrinter.status().connected;
+  var printedVia = 'browser';
+  var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
-    try {
-      await EdenPrinter.printOrder(order);
-      printedVia = 'thermal';
-    } catch (err) {
-      console.error('Thermal print failed, falling back to browser print:', err);
-      printReceipts(order);
-    }
+    try { await EdenPrinter.printOrder(order); printedVia = 'thermal'; }
+    catch (err) { console.error('Thermal print failed:', err); printReceipts(order); }
   } else {
     printReceipts(order);
   }
 
   closeCart();
-  const tail = printedVia === 'thermal'
-    ? 'printing receipts on the thermal printer now.'
-    : 'opening the print dialog now.';
+  var tail = printedVia === 'thermal' ? 'printing on thermal printer.' : 'opening print dialog.';
   document.getElementById('confirmation-text').textContent =
-    `Order #${order.id.replace('ORD-','')} for ${name} — ${tail} Hand the customer copy to the guest and the kitchen copy to the cook.`;
+    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — ' + tail + ' Hand customer copy to guest, kitchen copy to cook.';
   document.getElementById('order-confirmation').classList.add('active');
   cart = [];
   appliedPromo = null;
   document.getElementById('promo-input').value = '';
   document.getElementById('promo-msg').textContent = '';
   document.getElementById('promo-msg').className = 'promo-msg';
-  updateCartCount();
   document.getElementById('customer-name').value = '';
+  updateOrderBar();
 }
 
+function closeConfirmation() { document.getElementById('order-confirmation').classList.remove('active'); }
+
 function receiptHtml(order, copyLabel) {
-  const when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-  const itemsHtml = order.items.map(i => `
-    <div class="r-row"><span>${i.quantity}x ${i.name}</span><span>$${Number(i.total).toFixed(2)}</span></div>
-    ${i.options && i.options.length ? `<div class="r-opts">${i.options.join(', ')}</div>` : ''}
-  `).join('');
-  const sub = order.subtotal != null ? order.subtotal : order.total;
-  return `
-    <div class="receipt">
-      <div class="r-center r-title">EDEN GRILL</div>
-      <div class="r-center">OKC</div>
-      <div class="r-center r-copy">${copyLabel}</div>
-      <hr>
-      <div class="r-row"><span>Order #</span><span>${order.id.replace('ORD-', '')}</span></div>
-      <div class="r-row"><span>Date</span><span>${when}</span></div>
-      <div class="r-row"><span>Name</span><span>${order.customer.name}</span></div>
-      <hr>
-      ${itemsHtml}
-      <hr>
-      <div class="r-row"><span>Subtotal</span><span>$${Number(sub).toFixed(2)}</span></div>
-      ${order.discount ? `<div class="r-row"><span>Discount ${order.promoCode ? '(' + order.promoCode + ')' : ''}</span><span>-$${Number(order.discount).toFixed(2)}</span></div>` : ''}
-      <div class="r-row r-total"><span>TOTAL</span><span>$${Number(order.total).toFixed(2)}</span></div>
-      <div class="r-row"><span>Paid</span><span>CASH</span></div>
-      <hr>
-      <div class="r-foot">Made to order · Thank you!</div>
-    </div>
-  `;
+  var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+  var itemsHtml = order.items.map(function(i) {
+    return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
+      (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '');
+  }).join('');
+  var sub = order.subtotal != null ? order.subtotal : order.total;
+  return '<div class="receipt">' +
+    '<div class="r-center r-title">EDEN GRILL</div>' +
+    '<div class="r-center">OKC</div>' +
+    '<div class="r-center r-copy">' + copyLabel + '</div>' +
+    '<hr>' +
+    '<div class="r-row"><span>Order #</span><span>' + order.id.replace('ORD-', '') + '</span></div>' +
+    '<div class="r-row"><span>Date</span><span>' + when + '</span></div>' +
+    '<div class="r-row"><span>Name</span><span>' + order.customer.name + '</span></div>' +
+    '<hr>' +
+    itemsHtml +
+    '<hr>' +
+    '<div class="r-row"><span>Subtotal</span><span>$' + Number(sub).toFixed(2) + '</span></div>' +
+    (order.discount ? '<div class="r-row"><span>Discount ' + (order.promoCode ? '(' + order.promoCode + ')' : '') + '</span><span>-$' + Number(order.discount).toFixed(2) + '</span></div>' : '') +
+    '<div class="r-row r-total"><span>TOTAL</span><span>$' + Number(order.total).toFixed(2) + '</span></div>' +
+    '<div class="r-row"><span>Paid</span><span>CASH</span></div>' +
+    '<hr>' +
+    '<div class="r-foot">Made to order · Thank you!</div>' +
+  '</div>';
 }
 
 function printReceipts(order) {
-  // Two copies in one print job: customer copy + kitchen copy (page-break between them).
   document.getElementById('print-area').innerHTML =
     receiptHtml(order, 'CUSTOMER COPY') + receiptHtml(order, 'KITCHEN COPY');
   window.print();
 }
 
-// ----- Printer settings panel -----
 function printerMsg(text, kind) {
-  const el = document.getElementById('printer-msg');
+  var el = document.getElementById('printer-msg');
   el.textContent = text || '';
   el.className = 'printer-msg' + (kind ? ' ' + kind : '');
 }
 
 function refreshPrinterUI() {
-  const st = window.EdenPrinter ? EdenPrinter.status() : { connected: false };
-  const sup = window.EdenPrinter ? EdenPrinter.isSupported() : { usb: false, bluetooth: false };
-
-  // Header dot + panel dot/text
+  var st = window.EdenPrinter ? EdenPrinter.status() : { connected: false };
+  var sup = window.EdenPrinter ? EdenPrinter.isSupported() : { usb: false, bluetooth: false };
   document.getElementById('printer-dot').classList.toggle('on', st.connected);
-  const sdot = document.getElementById('printer-status-dot');
-  const stext = document.getElementById('printer-status-text');
+  var sdot = document.getElementById('printer-status-dot');
+  var stext = document.getElementById('printer-status-text');
   if (sdot) sdot.classList.toggle('on', st.connected);
-  if (stext) stext.textContent = st.connected
-    ? `Connected: ${st.name} (${st.kind === 'usb' ? 'USB' : 'Bluetooth'})`
-    : 'Not connected';
-
-  // Buttons
-  const btnUsb = document.getElementById('btn-usb');
-  const btnBt = document.getElementById('btn-bt');
-  const btnTest = document.getElementById('btn-test');
-  const btnDisc = document.getElementById('btn-disc');
-  if (btnUsb) { btnUsb.disabled = !sup.usb; btnUsb.textContent = sup.usb ? 'Connect USB printer' : 'USB not supported here'; }
-  if (btnBt) { btnBt.disabled = !sup.bluetooth; btnBt.textContent = sup.bluetooth ? 'Connect Bluetooth printer' : 'Bluetooth not supported here'; }
+  if (stext) stext.textContent = st.connected ? 'Connected: ' + st.name + ' (' + (st.kind === 'usb' ? 'USB' : 'BT') + ')' : 'Not connected';
+  var btnUsb = document.getElementById('btn-usb');
+  var btnBt = document.getElementById('btn-bt');
+  var btnTest = document.getElementById('btn-test');
+  var btnDisc = document.getElementById('btn-disc');
+  if (btnUsb) { btnUsb.disabled = !sup.usb; btnUsb.textContent = sup.usb ? 'Connect USB Printer' : 'USB not supported'; }
+  if (btnBt) { btnBt.disabled = !sup.bluetooth; btnBt.textContent = sup.bluetooth ? 'Connect Bluetooth Printer' : 'BT not supported'; }
   if (btnTest) btnTest.disabled = !st.connected;
   if (btnDisc) btnDisc.disabled = !st.connected;
-
-  // Paper width selection
-  const cols = window.EdenPrinter ? EdenPrinter.getCols() : 48;
-  const p58 = document.getElementById('paper-58');
-  const p80 = document.getElementById('paper-80');
-  if (p58) p58.classList.toggle('sel', cols === 32);
-  if (p80) p80.classList.toggle('sel', cols === 48);
-
-  // Support note / fallback explanation
-  const note = document.getElementById('printer-support-note');
-  if (note) {
-    if (!sup.usb && !sup.bluetooth) {
-      note.textContent = 'This browser has no USB/Bluetooth printing (e.g. Safari on iPhone). Receipts will print through the browser print dialog instead.';
-    } else {
-      note.textContent = 'Tip: connecting must be done by a tap here (browser security). USB may need a WinUSB driver on Windows. On phones, use Chrome for Bluetooth.';
-    }
-  }
+  var cols = window.EdenPrinter ? EdenPrinter.getCols() : 48;
+  document.getElementById('paper-58').classList.toggle('sel', cols === 32);
+  document.getElementById('paper-80').classList.toggle('sel', cols === 48);
+  var note = document.getElementById('printer-support-note');
+  if (note) note.textContent = (!sup.usb && !sup.bluetooth) ? 'No USB/BT support — receipts use browser print dialog.' : 'USB may need WinUSB driver (Zadig). Use Chrome for Bluetooth.';
 }
 
 function openPrinter() { document.getElementById('printer-modal').classList.add('active'); printerMsg(''); refreshPrinterUI(); }
@@ -460,9 +451,8 @@ async function connectPrinter(kind) {
   try {
     if (kind === 'usb') await EdenPrinter.connectUSB();
     else await EdenPrinter.connectBluetooth();
-    printerMsg('Printer connected.', 'ok');
+    printerMsg('Connected.', 'ok');
   } catch (err) {
-    // User cancelling the chooser throws — treat that quietly.
     if (err && (err.name === 'NotFoundError' || /cancel/i.test(err.message || ''))) printerMsg('No printer selected.');
     else printerMsg(err && err.message ? err.message : 'Could not connect.', 'err');
   }
@@ -477,9 +467,9 @@ async function disconnectPrinter() {
 function setPaper(cols) { if (window.EdenPrinter) EdenPrinter.setCols(cols); refreshPrinterUI(); }
 
 async function testPrint() {
-  const testOrder = {
+  var testOrder = {
     id: 'ORD-000000', location: 'okc', customer: { name: 'TEST PRINT' },
-    items: [{ name: 'Smash Hamburger', options: ['American', 'Lettuce', 'Add Bacon'], quantity: 1, total: 14 }],
+    items: [{ name: 'Smash Hamburger', options: ['American', 'Lettuce', 'Bacon'], quantity: 1, total: 14 }],
     subtotal: 14, discount: 0, promoCode: null, total: 14, payment: 'cash', paid: true,
     timestamp: new Date().toISOString()
   };
@@ -491,17 +481,9 @@ if (window.EdenPrinter) EdenPrinter.onChange(refreshPrinterUI);
 refreshPrinterUI();
 
 async function load() {
-  const res = await fetch('menu.json', { cache: 'no-store' });
-  const data = await res.json();
-  const root = document.getElementById('menu-root');
-  root.innerHTML = Object.keys(data).map(key => `
-    <section class="menu-section">
-      <h2 class="section-title">${SECTION_TITLES[key] || key}</h2>
-      <div class="menu-list">
-        ${data[key].map((item, i) => renderItem(item, `${key}-${i}`)).join('')}
-      </div>
-    </section>
-  `).join('');
+  var res = await fetch('menu.json', { cache: 'no-store' });
+  menuData = await res.json();
+  renderAll();
 }
 load();
 </script>
