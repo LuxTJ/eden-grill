@@ -196,6 +196,131 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Street Taco",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Tortilla",
+          "type": "radio",
+          "options": ["Soft Corn", "Flour"]
+        },
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": ["No Meat", "Chicken", "Steak", "Ground Beef"]
+        },
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Cilantro", "Diced Onion", "Lettuce", "Tomato", "Shredded Cabbage", "Pico", "Jalapenos", "Lime"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Shredded Cheese", "price": 1 },
+            { "name": "Bacon", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Quesadilla",
+      "price": 8,
+      "optionGroups": [
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Pico", "Jalapenos"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Chicken", "price": 2 },
+            { "name": "Steak", "price": 2 },
+            { "name": "Ground Beef", "price": 2 },
+            { "name": "Bacon", "price": 2 },
+            { "name": "Extra Shredded Cheese", "price": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Breakfast Tacos",
+      "price": 5,
+      "optionGroups": [
+        {
+          "label": "Exclusions",
+          "type": "checkbox",
+          "options": ["No Potato", "No Cheese"]
+        },
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos"]
+        },
+        {
+          "label": "Pick Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Ketchup", "Thousand Island", "No Sauce"]
+        },
+        {
+          "label": "Extra Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Bacon", "price": 2 },
+            { "name": "Sausage", "price": 2 },
+            { "name": "Ham", "price": 2 },
+            { "name": "Turkey", "price": 2 },
+            { "name": "Chicken", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Loaded Nachos",
+      "price": 12,
+      "optionGroups": [
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": ["No Meat", "Chicken", "Steak", "Ground Beef", "Bacon"]
+        },
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Cilantro", "Diced Onion", "Lettuce", "Tomato", "Shredded Cabbage", "Pico", "Jalapenos", "Lime"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
+        },
+        {
+          "label": "Extra Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Cheese", "price": 1 },
+            { "name": "Bacon", "price": 2 },
+            { "name": "Chicken", "price": 2 },
+            { "name": "Steak", "price": 2 },
+            { "name": "Ground Beef", "price": 2 }
+          ]
+        }
+      ]
     }
   ],
   "onFry": [
