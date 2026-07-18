@@ -88,26 +88,6 @@
       ]
     },
     {
-      "name": "Grilled Cheese",
-      "price": 8,
-      "optionGroups": [
-        {
-          "label": "Pick Your Cheese",
-          "type": "radio",
-          "options": ["American", "Provolone", "Shredded Cheese"]
-        },
-        {
-          "label": "Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Bacon", "price": 2 },
-            { "name": "Ham", "price": 2 },
-            { "name": "Turkey", "price": 2 }
-          ]
-        }
-      ]
-    },
-    {
       "name": "BLT",
       "price": 9,
       "optionGroups": [
@@ -119,160 +99,26 @@
         {
           "label": "Pick Toppings",
           "type": "checkbox",
-          "options": ["Lettuce", "Tomato", "Pickle", "Raw Onions", "Grilled Onions", "Grilled Mushrooms", "Jalapenos"]
+          "options": ["Lettuce", "Tomato", "Raw Onions", "Grilled Onions", "Jalapenos"]
         },
         {
           "label": "Pick Your Sauce",
           "type": "checkbox",
-          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "BBQ", "A1", "NO Sauce"]
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "NO Sauce"]
         },
         {
           "label": "Add On's",
           "type": "checkbox",
           "options": [
-            { "name": "Extra Bacon", "price": 2 },
             { "name": "American Cheese", "price": 1 },
             { "name": "Provolone Cheese", "price": 1 },
-            { "name": "Shredded Cheese", "price": 1 }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Club Sandwich",
-      "price": 12,
-      "optionGroups": [
-        {
-          "label": "Bread/Roll Choice",
-          "type": "radio",
-          "options": ["Sliced Bread", "Hoagie Roll"]
-        },
-        {
-          "label": "Meat Options",
-          "type": "radio",
-          "options": ["Ham", "Turkey", "No Ham", "No Turkey"]
-        },
-        {
-          "label": "Pick Your Cheese",
-          "type": "radio",
-          "options": ["No cheese", "American", "Provolone"]
-        },
-        {
-          "label": "Pick Toppings",
-          "type": "checkbox",
-          "options": ["Lettuce", "Tomato", "Pickle", "Raw Onions", "Jalapenos"]
-        },
-        {
-          "label": "Pick Your Sauce",
-          "type": "checkbox",
-          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "NO Sauce"]
-        },
-        {
-          "label": "Extra Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Bacon", "price": 2 },
-            { "name": "Extra Ham", "price": 2 },
-            { "name": "Extra Turkey", "price": 2 }
+            { "name": "Fried Egg", "price": 1 }
           ]
         }
       ]
     }
   ],
   "onTortilla": [
-    {
-      "name": "Street Taco",
-      "price": 6,
-      "optionGroups": [
-        {
-          "label": "Pick Your Tortilla",
-          "type": "radio",
-          "options": ["Soft Corn", "Flour"]
-        },
-        {
-          "label": "Pick Your Meat",
-          "type": "radio",
-          "options": ["No Meat", "Chicken", "Steak", "Ground Beef"]
-        },
-        {
-          "label": "Pick Toppings",
-          "type": "checkbox",
-          "options": ["Cilantro", "Diced Onion", "Lettuce", "Tomato", "Shredded Cabbage", "Pico", "Jalapenos", "Lime"]
-        },
-        {
-          "label": "Pick Your Sauce",
-          "type": "checkbox",
-          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
-        },
-        {
-          "label": "Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Shredded Cheese", "price": 1 },
-            { "name": "Bacon", "price": 2 }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Quesadilla",
-      "price": 8,
-      "optionGroups": [
-        {
-          "label": "Pick Toppings",
-          "type": "checkbox",
-          "options": ["Pico", "Jalapenos"]
-        },
-        {
-          "label": "Pick Your Sauce",
-          "type": "checkbox",
-          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
-        },
-        {
-          "label": "Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Chicken", "price": 2 },
-            { "name": "Steak", "price": 2 },
-            { "name": "Ground Beef", "price": 2 },
-            { "name": "Bacon", "price": 2 },
-            { "name": "Extra Shredded Cheese", "price": 1 }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Breakfast Tacos",
-      "price": 5,
-      "optionGroups": [
-        {
-          "label": "Exclusions",
-          "type": "checkbox",
-          "options": ["No Potato", "No Cheese"]
-        },
-        {
-          "label": "Pick Toppings",
-          "type": "checkbox",
-          "options": ["Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos"]
-        },
-        {
-          "label": "Pick Sauce",
-          "type": "checkbox",
-          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Ketchup", "Thousand Island", "No Sauce"]
-        },
-        {
-          "label": "Extra Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Bacon", "price": 2 },
-            { "name": "Sausage", "price": 2 },
-            { "name": "Ham", "price": 2 },
-            { "name": "Turkey", "price": 2 },
-            { "name": "Chicken", "price": 2 }
-          ]
-        }
-      ]
-    },
     {
       "name": "Nachos",
       "price": 8,
@@ -287,38 +133,6 @@
           "type": "checkbox",
           "options": [
             { "name": "Extra Cheese", "price": 1 }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Loaded Nachos",
-      "price": 12,
-      "optionGroups": [
-        {
-          "label": "Pick Your Meat",
-          "type": "radio",
-          "options": ["No Meat", "Chicken", "Steak", "Ground Beef", "Bacon"]
-        },
-        {
-          "label": "Pick Toppings",
-          "type": "checkbox",
-          "options": ["Cilantro", "Diced Onion", "Lettuce", "Tomato", "Shredded Cabbage", "Pico", "Jalapenos", "Lime"]
-        },
-        {
-          "label": "Pick Your Sauce",
-          "type": "checkbox",
-          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
-        },
-        {
-          "label": "Extra Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Cheese", "price": 1 },
-            { "name": "Bacon", "price": 2 },
-            { "name": "Chicken", "price": 2 },
-            { "name": "Steak", "price": 2 },
-            { "name": "Ground Beef", "price": 2 }
           ]
         }
       ]
@@ -346,59 +160,6 @@
             "Celery",
             "Carrots",
             { "name": "Cheese Sauce", "price": 1 }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Crinkle Fries or Tots",
-      "price": 6,
-      "optionGroups": [
-        {
-          "label": "Pick Your Style",
-          "type": "radio",
-          "options": ["Crinkle Fries", "Tots"]
-        },
-        {
-          "label": "Pick Your Sauce",
-          "type": "checkbox",
-          "options": ["Mustard", "Ketchup", "Mayonnaise", "Thousand Island", "NO Sauce"]
-        },
-        {
-          "label": "Extra Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Cheese Sauce", "price": 2 },
-            { "name": "Shredded Cheese", "price": 2 }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Loaded Crinkle Fries or Tots",
-      "price": 12,
-      "optionGroups": [
-        {
-          "label": "Pick Your Style",
-          "type": "radio",
-          "options": ["Crinkle Fries", "Tots"]
-        },
-        {
-          "label": "Pick Your Meat",
-          "type": "radio",
-          "options": ["No Meat", "Chicken", "Steak", "Ground Beef", "Bacon", "Breakfast Sausage"]
-        },
-        {
-          "label": "Pick Your Sauce/Toppings",
-          "type": "checkbox",
-          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Pico", "Jalapenos", "No Sauce"]
-        },
-        {
-          "label": "Extra Add-Ons",
-          "type": "checkbox",
-          "options": [
-            { "name": "Extra Meat", "price": 2 },
-            { "name": "Extra Cheese", "price": 1 }
           ]
         }
       ]
@@ -602,6 +363,206 @@
       "name": "Bag of Chips",
       "price": 2,
       "optionGroups": []
+    }
+  ],
+  "lateNight": [
+    {
+      "name": "Breakfast Tacos",
+      "price": 5,
+      "optionGroups": [
+        {
+          "label": "Exclusions",
+          "type": "checkbox",
+          "options": ["No Potato", "No Cheese"]
+        },
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos"]
+        },
+        {
+          "label": "Pick Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Ketchup", "Thousand Island", "No Sauce"]
+        },
+        {
+          "label": "Extra Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Bacon", "price": 2 },
+            { "name": "Sausage", "price": 2 },
+            { "name": "Ham", "price": 2 },
+            { "name": "Turkey", "price": 2 },
+            { "name": "Chicken", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Grilled Cheese",
+      "price": 8,
+      "optionGroups": [
+        {
+          "label": "Pick Your Cheese",
+          "type": "radio",
+          "options": ["American", "Provolone", "Shredded Cheese"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Bacon", "price": 2 },
+            { "name": "Ham", "price": 2 },
+            { "name": "Turkey", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Crinkle Fries or Tots",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Style",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Mustard", "Ketchup", "Mayonnaise", "Thousand Island", "NO Sauce"]
+        },
+        {
+          "label": "Extra Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Cheese Sauce", "price": 2 },
+            { "name": "Shredded Cheese", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Loaded Nachos",
+      "price": 12,
+      "optionGroups": [
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": ["No Meat", "Chicken", "Steak", "Ground Beef", "Bacon"]
+        },
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Cilantro", "Diced Onion", "Lettuce", "Tomato", "Shredded Cabbage", "Pico", "Jalapenos", "Lime"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
+        },
+        {
+          "label": "Extra Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Cheese", "price": 1 },
+            { "name": "Bacon", "price": 2 },
+            { "name": "Chicken", "price": 2 },
+            { "name": "Steak", "price": 2 },
+            { "name": "Ground Beef", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Loaded Crinkle Fries or Tots",
+      "price": 12,
+      "optionGroups": [
+        {
+          "label": "Pick Your Style",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": ["No Meat", "Chicken", "Steak", "Ground Beef", "Bacon", "Breakfast Sausage"]
+        },
+        {
+          "label": "Pick Your Sauce/Toppings",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Pico", "Jalapenos", "No Sauce"]
+        },
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Extra Meat", "price": 2 },
+            { "name": "Extra Cheese", "price": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Quesadilla",
+      "price": 8,
+      "optionGroups": [
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Pico", "Jalapenos"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Chicken", "price": 2 },
+            { "name": "Steak", "price": 2 },
+            { "name": "Ground Beef", "price": 2 },
+            { "name": "Bacon", "price": 2 },
+            { "name": "Extra Shredded Cheese", "price": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Street Taco",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Tortilla",
+          "type": "radio",
+          "options": ["Soft Corn", "Flour"]
+        },
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": ["No Meat", "Chicken", "Steak", "Ground Beef"]
+        },
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Cilantro", "Diced Onion", "Lettuce", "Tomato", "Shredded Cabbage", "Pico", "Jalapenos", "Lime"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "NO Sauce"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Shredded Cheese", "price": 1 },
+            { "name": "Bacon", "price": 2 }
+          ]
+        }
+      ]
     }
   ]
 }
