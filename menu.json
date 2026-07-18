@@ -116,6 +116,66 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Grilled Cheese",
+      "price": 8,
+      "optionGroups": [
+        {
+          "label": "Pick Your Cheese",
+          "type": "radio",
+          "options": ["American", "Provolone", "Shredded Cheese"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Bacon", "price": 2 },
+            { "name": "Ham", "price": 2 },
+            { "name": "Turkey", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Club Sandwich",
+      "price": 12,
+      "optionGroups": [
+        {
+          "label": "Bread/Roll Choice",
+          "type": "radio",
+          "options": ["Sliced Bread", "Hoagie Roll"]
+        },
+        {
+          "label": "Meat Options",
+          "type": "radio",
+          "options": ["Ham", "Turkey", "No Ham", "No Turkey"]
+        },
+        {
+          "label": "Pick Your Cheese",
+          "type": "radio",
+          "options": ["No cheese", "American", "Provolone"]
+        },
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["Lettuce", "Tomato", "Pickle", "Raw Onions", "Jalapenos"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "NO Sauce"]
+        },
+        {
+          "label": "Extra Add Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Bacon", "price": 2 },
+            { "name": "Extra Ham", "price": 2 },
+            { "name": "Extra Turkey", "price": 2 }
+          ]
+        }
+      ]
     }
   ],
   "onTortilla": [
