@@ -262,7 +262,11 @@
 
   async function printOrder(order) {
     if (!conn) throw new Error('No printer connected.');
-    await conn.send(buildOrderBytes(order));
+    const customer = buildCopy(order, 'CUSTOMER COPY');
+    await conn.send(customer);
+    await delay(500);
+    const kitchen = buildCopy(order, 'KITCHEN COPY');
+    await conn.send(kitchen);
   }
 
   window.EdenPrinter = {
