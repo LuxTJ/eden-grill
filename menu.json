@@ -472,14 +472,9 @@
       ]
     },
     {
-      "name": "Crinkle Fries or Tots",
+      "name": "Fries",
       "price": 6,
       "optionGroups": [
-        {
-          "label": "Pick Your Style",
-          "type": "radio",
-          "options": ["Crinkle Fries", "Tots"]
-        },
         {
           "label": "Pick Your Sauce",
           "type": "checkbox",
