@@ -138,11 +138,14 @@
   }
 
   function buildOrderBytes(order) {
-    // Customer copy + kitchen copy in one job.
+    // Two sets: 2 customer copies + 2 kitchen copies.
     const a = buildCopy(order, 'CUSTOMER COPY');
     const c = buildCopy(order, 'KITCHEN COPY');
-    const out = new Uint8Array(a.length + c.length);
-    out.set(a, 0); out.set(c, a.length);
+    const out = new Uint8Array(a.length * 2 + c.length * 2);
+    out.set(a, 0);
+    out.set(c, a.length);
+    out.set(a, a.length + c.length);
+    out.set(c, a.length * 2 + c.length);
     return out;
   }
 
