@@ -189,7 +189,7 @@
         {
           "label": "Drink Choice",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         },
         {
           "label": "Wing Sauce",
@@ -210,7 +210,7 @@
         {
           "label": "Drink Choice",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         },
         {
           "label": "Cheese Choice",
@@ -236,7 +236,7 @@
         {
           "label": "Drink Choice",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         }
       ]
     },
@@ -252,7 +252,7 @@
         {
           "label": "Drink Choice",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         },
         {
           "label": "Bread/Tortilla Choice",
@@ -305,12 +305,12 @@
         {
           "label": "Drink 1",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         },
         {
           "label": "Drink 2",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         }
       ]
     },
@@ -321,12 +321,12 @@
         {
           "label": "Drink 1",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         },
         {
           "label": "Drink 2",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper", "Water"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         }
       ]
     }
@@ -339,7 +339,7 @@
         {
           "label": "Pick Your Drink",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Dr Pepper"]
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper"]
         }
       ]
     },
