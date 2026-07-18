@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eden Grill — OKC</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .hero .note {
+    font-size: 0.8rem; font-style: italic; color: var(--text-secondary);
+    max-width: 420px; margin: 0.25rem auto 2rem;
+  }
+  .promo-row { display: flex; gap: 0.5rem; margin: 1rem 0 0.25rem; }
+  .promo-row input { flex: 1; padding: 0.6rem 0.75rem; background: #000; color: #fff; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; text-transform: uppercase; }
+  .promo-row input:focus { outline: none; border-color: #45BEFC; }
+  .promo-btn { padding: 0.6rem 1rem; background: #222; color: #fff; border: 1px solid #333; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  .promo-btn:hover { background: #333; }
+  .promo-msg { font-size: 0.8rem; min-height: 1.1rem; margin-bottom: 0.25rem; }
+  .promo-msg.ok { color: #28a745; }
+  .promo-msg.err { color: #dc3545; }
+  .cart-total .cart-strike { color: var(--text-secondary); text-decoration: line-through; font-size: 0.9rem; font-weight: 400; margin-right: 0.5rem; }
+
+  /* Receipt print area — hidden on screen, shown only when printing */
+  #print-area { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #print-area, #print-area * { visibility: visible; }
+    #print-area { display: block; position: absolute; left: 0; top: 0; width: 100%; }
+    .receipt { width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; background: #fff;
+      font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; page-break-after: always; }
+    .receipt:last-child { page-break-after: auto; }
+    .receipt .r-center { text-align: center; }
+    .receipt .r-title { font-size: 16px; font-weight: 700; letter-spacing: 0.05em; }
+    .receipt .r-copy { font-weight: 700; margin: 4px 0; }
+    .receipt hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+    .receipt .r-row { display: flex; justify-content: space-between; gap: 8px; }
+    .receipt .r-opts { padding-left: 8px; font-size: 11px; }
+    .receipt .r-total { font-weight: 700; font-size: 14px; }
+    .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
+  }
+
+  /* Printer settings panel */
+  .printer-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 0.4rem; display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+  .printer-btn svg { width: 22px; height: 22px; }
+  .printer-dot { width: 9px; height: 9px; border-radius: 50%; background: #dc3545; display: inline-block; }
+  .printer-dot.on { background: #28a745; }
+  .printer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 1200; padding: 1rem; }
+  .printer-modal.active { display: flex; }
+  .printer-card { background: #111; border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 420px; padding: 1.25rem; color: #fff; }
+  .printer-card h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+  .printer-card .sub { color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 1rem; }
+  .printer-status { display: flex; align-items: center; gap: 0.5rem; background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 0.9rem; margin-bottom: 1rem; }
+  .printer-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+  .printer-actions button { padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #333; background: #1c1c1c; color: #fff; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .printer-actions button:hover { background: #262626; }
+  .printer-actions button.primary { background: #45BEFC; color: #000; border-color: #45BEFC; }
+  .printer-actions button.danger { background: #2a1414; border-color: #5a2a2a; color: #ff8a8a; }
+  .printer-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .paper-row { display: flex; gap: 0.5rem; margin: 1rem 0 0.25rem; }
+  .paper-row button { flex: 1; padding: 0.55rem; border-radius: 8px; border: 1px solid #333; background: #1c1c1c; color: #fff; cursor: pointer; font-size: 0.85rem; }
+  .paper-row button.sel { background: #45BEFC; color: #000; border-color: #45BEFC; font-weight: 700; }
+  .printer-note { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.9rem; line-height: 1.4; }
+  .printer-msg { font-size: 0.82rem; min-height: 1.1rem; margin: 0.5rem 0 0; }
+  .printer-msg.err { color: #ff8a8a; }
+  .printer-msg.ok { color: #28a745; }
+  .printer-close { float: right; background: none; border: none; color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+<div class="hero-bg"></div>
+<div class="hero-overlay"></div>
+<div class="hero-content">
+<div class="logo-circle">
+<img src="logo.png" alt="Eden Grill">
+</div>
+<h1>Eden Grill</h1>
+<p class="subtitle">OKC</p>
+<p class="location-badge">Friday &amp; Saturday · 10:00 am – 1:00 am</p>
+<p class="note">Menu subject to change after 8:30pm · Please allow 20–30 min — food is made to order.</p>
+</div>
+</header>
+
+<nav class="bottom-nav" style="justify-content: space-between;">
+<button class="printer-btn" onclick="openPrinter()" title="Printer settings">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+<span class="printer-dot" id="printer-dot"></span>
+</button>
+<button class="cart-btn" onclick="showCart()">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+<span class="cart-count" id="cart-count">0</span>
+</button>
+</nav>
+
+<div id="print-area"></div>
+
+<div class="printer-modal" id="printer-modal">
+<div class="printer-card">
+<button class="printer-close" onclick="closePrinter()">×</button>
+<h2>Receipt Printer</h2>
+<p class="sub">Connect a thermal printer to print receipts directly. No connection = the browser print dialog is used instead.</p>
+<div class="printer-status">
+<span class="printer-dot" id="printer-status-dot"></span>
+<span id="printer-status-text">Not connected</span>
+</div>
+<div class="printer-actions">
+<button id="btn-usb" class="primary" onclick="connectPrinter('usb')">Connect USB printer</button>
+<button id="btn-bt" class="primary" onclick="connectPrinter('bluetooth')">Connect Bluetooth printer</button>
+<button id="btn-test" onclick="testPrint()">Print test receipt</button>
+<button id="btn-disc" class="danger" onclick="disconnectPrinter()">Disconnect</button>
+</div>
+<div class="printer-msg" id="printer-msg"></div>
+<div class="paper-row">
+<button id="paper-58" onclick="setPaper(32)">58 mm paper</button>
+<button id="paper-80" onclick="setPaper(48)">80 mm paper</button>
+</div>
+<p class="printer-note" id="printer-support-note"></p>
+</div>
+</div>
+
+<main id="menu-root" style="max-width: 720px; margin: 0 auto; padding: 1rem 1rem 6rem;"></main>
+
+<div class="cart-modal" id="cart-modal">
+<div class="cart-content">
+<div class="cart-header">
+<h2>Your Order</h2>
+<button class="close-cart" onclick="closeCart()">×</button>
+</div>
+<div class="cart-items" id="cart-items"></div>
+<div class="promo-row">
+<input type="text" id="promo-input" placeholder="Promo code (optional)" autocomplete="off">
+<button type="button" class="promo-btn" onclick="applyPromo()">Apply</button>
+</div>
+<div class="promo-msg" id="promo-msg"></div>
+<div class="cart-total" id="cart-total">Total: $0</div>
+<div class="customer-form">
+<h3>Order Details</h3>
+<label>Name (for the order ticket)</label>
+<input type="text" id="customer-name" placeholder="Customer name">
+<label>Payment</label>
+<div style="padding:0.6rem 0.75rem;background:#000;border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:0.9rem;">Cash — collected at the counter</div>
+</div>
+<button class="checkout-btn" onclick="placeOrder()">Pay Cash &amp; Print</button>
+</div>
+</div>
+
+<div class="order-confirmation" id="order-confirmation">
+<div class="confirmation-content">
+<div class="checkmark">✓</div>
+<h2>Order Placed!</h2>
+<p id="confirmation-text"></p>
+<button class="checkout-btn" onclick="closeConfirmation()">Done</button>
+</div>
+</div>
+
+<script src="printer.js"></script>
+<script>
+const STORAGE_KEY = 'edenGrillOrders';
+
+const SECTION_TITLES = {
+  onBread: "ON BREAD",
+  onTortilla: "ON TORTILLA",
+  onFry: "ON FRY",
+  drinks: "DRINKS & SNACKS",
+  combos: "COMBO MEALS",
+  lateNight: "LATE NIGHT MENU · 9:00pm – 1:00am"
+};
+
+let cart = [];
+
+// Promo codes: code -> fraction off (0.5 = 50% off, 1 = 100% off). Case-insensitive.
+const PROMO_CODES = { 'STAFF69': 0.5, 'MGR69': 1 };
+let appliedPromo = null; // { code, rate }
+
+function applyPromo() {
+  const input = document.getElementById('promo-input');
+  const msg = document.getElementById('promo-msg');
+  const code = input.value.trim().toUpperCase();
+  if (!code) { appliedPromo = null; msg.className = 'promo-msg'; msg.textContent = ''; showCart(); return; }
+  if (PROMO_CODES[code] !== undefined) {
+    appliedPromo = { code, rate: PROMO_CODES[code] };
+    msg.className = 'promo-msg ok';
+    msg.textContent = `Applied ${code} — ${Math.round(appliedPromo.rate * 100)}% off`;
+  } else {
+    appliedPromo = null;
+    msg.className = 'promo-msg err';
+    msg.textContent = 'Invalid promo code';
+  }
+  showCart();
+}
+
+function renderItem(item, itemId) {
+  const groups = item.optionGroups || [];
+  return `
+    <div class="menu-item" data-id="${itemId}">
+      <div class="menu-item-header" onclick="toggleOptions('${itemId}')">
+        <div class="menu-item-info">
+          <div class="menu-item-name">${item.name}</div>
+          ${item.description ? `<div class="menu-item-description">${item.description}</div>` : ''}
+        </div>
+        <div class="menu-item-price">$${item.price}</div>
+      </div>
+      <div class="menu-item-options" id="options-${itemId}">
+        ${groups.map((group, gi) => `
+          <div class="option-group">
+            <div class="option-label">${group.label}</div>
+            ${group.options.map((opt, oi) => {
+              const isObj = typeof opt === 'object';
+              const name = isObj ? opt.name : opt;
+              const price = isObj ? opt.price : 0;
+              const inputType = group.type === 'radio' ? 'radio' : 'checkbox';
+              const inputName = inputType === 'radio' ? `${itemId}-g${gi}` : `${itemId}-g${gi}-${oi}`;
+              return `
+                <label class="option-checkbox">
+                  <input type="${inputType}" name="${inputName}" value="${name}" ${price ? `data-price="${price}"` : ''} ${inputType === 'radio' && oi === 0 ? 'checked' : ''} onchange="updateTotal('${itemId}', ${item.price})">
+                  <span>${name}${price > 0 ? ` (+$${price})` : ''}</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        `).join('')}
+        <div class="item-total" id="total-${itemId}">Total: $${item.price}</div>
+        <div class="quantity-control">
+          <button type="button" class="qty-btn" onclick="changeQty('${itemId}', -1, ${item.price})">-</button>
+          <span class="qty-display" id="qty-${itemId}">1</span>
+          <button type="button" class="qty-btn" onclick="changeQty('${itemId}', 1, ${item.price})">+</button>
+        </div>
+        <button class="add-to-cart-btn" onclick="addToCart('${itemId}', '${item.name.replace(/'/g, "\\'")}', ${item.price})">Add to Order</button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleOptions(itemId) {
+  const el = document.getElementById(`options-${itemId}`);
+  if (!el) return;
+  const open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  document.querySelector(`[data-id="${itemId}"]`).classList.toggle('expanded', !open);
+}
+
+function unitTotal(itemId, basePrice) {
+  const item = document.querySelector(`[data-id="${itemId}"]`);
+  let total = basePrice;
+  item.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => total += parseFloat(cb.dataset.price || 0));
+  return total;
+}
+
+function updateTotal(itemId, basePrice) {
+  const qty = parseInt(document.getElementById(`qty-${itemId}`).innerText) || 1;
+  const el = document.getElementById(`total-${itemId}`);
+  if (el) el.textContent = `Total: $${(unitTotal(itemId, basePrice) * qty).toFixed(2)}`;
+}
+
+function changeQty(itemId, delta, basePrice) {
+  const qtyEl = document.getElementById(`qty-${itemId}`);
+  let qty = parseInt(qtyEl.innerText) + delta;
+  if (qty < 1) qty = 1;
+  qtyEl.innerText = qty;
+  updateTotal(itemId, basePrice);
+}
+
+function addToCart(itemId, itemName, basePrice) {
+  const item = document.querySelector(`[data-id="${itemId}"]`);
+  const qty = parseInt(document.getElementById(`qty-${itemId}`).innerText) || 1;
+  const radios = Array.from(item.querySelectorAll('input[type="radio"]:checked')).map(r => r.value);
+  const checks = Array.from(item.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+  cart.push({ name: itemName, options: radios.concat(checks), unitTotal: unitTotal(itemId, basePrice), quantity: qty });
+  document.getElementById(`qty-${itemId}`).innerText = 1;
+  updateTotal(itemId, basePrice);
+  updateCartCount();
+  const btn = item.querySelector('.add-to-cart-btn');
+  const orig = btn.textContent;
+  btn.textContent = 'Added!';
+  btn.style.background = '#28a745';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1000);
+}
+
+function updateCartCount() { document.getElementById('cart-count').textContent = cart.length; }
+
+function showCart() {
+  const modal = document.getElementById('cart-modal');
+  const cartItems = document.getElementById('cart-items');
+  if (cart.length === 0) {
+    cartItems.innerHTML = '<p style="text-align:center; color: var(--text-secondary); padding: 2rem 0;">No items added yet</p>';
+  } else {
+    cartItems.innerHTML = cart.map((item, i) => `
+      <div class="cart-item">
+        <div class="cart-item-header">
+          <div class="cart-item-name">${item.name} <span class="cart-qty-badge">x${item.quantity}</span></div>
+          <button class="remove-item-btn" onclick="removeFromCart(${i})">Remove</button>
+        </div>
+        ${item.options.length ? `<div class="cart-item-options">${item.options.join(', ')}</div>` : ''}
+        <div class="cart-item-total">$${(item.unitTotal * item.quantity).toFixed(2)}</div>
+      </div>
+    `).join('');
+  }
+  const subtotal = cart.reduce((s, i) => s + i.unitTotal * i.quantity, 0);
+  const totalEl = document.getElementById('cart-total');
+  if (appliedPromo) {
+    const final = subtotal * (1 - appliedPromo.rate);
+    totalEl.innerHTML = `<span class="cart-strike">$${subtotal.toFixed(2)}</span>Total: $${final.toFixed(2)} <span style="font-size:0.8rem;color:#28a745;">(${appliedPromo.code})</span>`;
+  } else {
+    totalEl.textContent = `Total: $${subtotal.toFixed(2)}`;
+  }
+  modal.classList.add('active');
+}
+
+function removeFromCart(i) { cart.splice(i, 1); updateCartCount(); showCart(); }
+function closeCart() { document.getElementById('cart-modal').classList.remove('active'); }
+function closeConfirmation() { document.getElementById('order-confirmation').classList.remove('active'); }
+
+async function placeOrder() {
+  const name = document.getElementById('customer-name').value.trim();
+  if (!name) { alert('Please enter a name for the order ticket'); return; }
+  if (cart.length === 0) { alert('Please add at least one item to the order'); return; }
+  const subtotal = cart.reduce((s, i) => s + i.unitTotal * i.quantity, 0);
+  const rate = appliedPromo ? appliedPromo.rate : 0;
+  const discount = +(subtotal * rate).toFixed(2);
+  const total = +(subtotal - discount).toFixed(2);
+  const order = {
+    id: 'ORD-' + Date.now().toString().slice(-6),
+    location: 'okc',
+    customer: { name },
+    items: cart.map(i => ({ name: i.name, options: i.options, quantity: i.quantity, total: i.unitTotal * i.quantity })),
+    subtotal, discount, promoCode: appliedPromo ? appliedPromo.code : null,
+    total, payment: 'cash', paid: true,
+    timestamp: new Date().toISOString()
+  };
+  // Keep a local log of the day's orders on this device (no backend needed).
+  const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  all.push(order);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+
+  // Print both receipts (customer copy + kitchen copy).
+  // Prefer a connected thermal printer (USB/Bluetooth); fall back to the browser print dialog.
+  let printedVia = 'browser';
+  const printerReady = window.EdenPrinter && EdenPrinter.status().connected;
+  if (printerReady) {
+    try {
+      await EdenPrinter.printOrder(order);
+      printedVia = 'thermal';
+    } catch (err) {
+      console.error('Thermal print failed, falling back to browser print:', err);
+      printReceipts(order);
+    }
+  } else {
+    printReceipts(order);
+  }
+
+  closeCart();
+  const tail = printedVia === 'thermal'
+    ? 'printing receipts on the thermal printer now.'
+    : 'opening the print dialog now.';
+  document.getElementById('confirmation-text').textContent =
+    `Order #${order.id.replace('ORD-','')} for ${name} — ${tail} Hand the customer copy to the guest and the kitchen copy to the cook.`;
+  document.getElementById('order-confirmation').classList.add('active');
+  cart = [];
+  appliedPromo = null;
+  document.getElementById('promo-input').value = '';
+  document.getElementById('promo-msg').textContent = '';
+  document.getElementById('promo-msg').className = 'promo-msg';
+  updateCartCount();
+  document.getElementById('customer-name').value = '';
+}
+
+function receiptHtml(order, copyLabel) {
+  const when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+  const itemsHtml = order.items.map(i => `
+    <div class="r-row"><span>${i.quantity}x ${i.name}</span><span>$${Number(i.total).toFixed(2)}</span></div>
+    ${i.options && i.options.length ? `<div class="r-opts">${i.options.join(', ')}</div>` : ''}
+  `).join('');
+  const sub = order.subtotal != null ? order.subtotal : order.total;
+  return `
+    <div class="receipt">
+      <div class="r-center r-title">EDEN GRILL</div>
+      <div class="r-center">OKC</div>
+      <div class="r-center r-copy">${copyLabel}</div>
+      <hr>
+      <div class="r-row"><span>Order #</span><span>${order.id.replace('ORD-', '')}</span></div>
+      <div class="r-row"><span>Date</span><span>${when}</span></div>
+      <div class="r-row"><span>Name</span><span>${order.customer.name}</span></div>
+      <hr>
+      ${itemsHtml}
+      <hr>
+      <div class="r-row"><span>Subtotal</span><span>$${Number(sub).toFixed(2)}</span></div>
+      ${order.discount ? `<div class="r-row"><span>Discount ${order.promoCode ? '(' + order.promoCode + ')' : ''}</span><span>-$${Number(order.discount).toFixed(2)}</span></div>` : ''}
+      <div class="r-row r-total"><span>TOTAL</span><span>$${Number(order.total).toFixed(2)}</span></div>
+      <div class="r-row"><span>Paid</span><span>CASH</span></div>
+      <hr>
+      <div class="r-foot">Made to order · Thank you!</div>
+    </div>
+  `;
+}
+
+function printReceipts(order) {
+  // Two copies in one print job: customer copy + kitchen copy (page-break between them).
+  document.getElementById('print-area').innerHTML =
+    receiptHtml(order, 'CUSTOMER COPY') + receiptHtml(order, 'KITCHEN COPY');
+  window.print();
+}
+
+// ----- Printer settings panel -----
+function printerMsg(text, kind) {
+  const el = document.getElementById('printer-msg');
+  el.textContent = text || '';
+  el.className = 'printer-msg' + (kind ? ' ' + kind : '');
+}
+
+function refreshPrinterUI() {
+  const st = window.EdenPrinter ? EdenPrinter.status() : { connected: false };
+  const sup = window.EdenPrinter ? EdenPrinter.isSupported() : { usb: false, bluetooth: false };
+
+  // Header dot + panel dot/text
+  document.getElementById('printer-dot').classList.toggle('on', st.connected);
+  const sdot = document.getElementById('printer-status-dot');
+  const stext = document.getElementById('printer-status-text');
+  if (sdot) sdot.classList.toggle('on', st.connected);
+  if (stext) stext.textContent = st.connected
+    ? `Connected: ${st.name} (${st.kind === 'usb' ? 'USB' : 'Bluetooth'})`
+    : 'Not connected';
+
+  // Buttons
+  const btnUsb = document.getElementById('btn-usb');
+  const btnBt = document.getElementById('btn-bt');
+  const btnTest = document.getElementById('btn-test');
+  const btnDisc = document.getElementById('btn-disc');
+  if (btnUsb) { btnUsb.disabled = !sup.usb; btnUsb.textContent = sup.usb ? 'Connect USB printer' : 'USB not supported here'; }
+  if (btnBt) { btnBt.disabled = !sup.bluetooth; btnBt.textContent = sup.bluetooth ? 'Connect Bluetooth printer' : 'Bluetooth not supported here'; }
+  if (btnTest) btnTest.disabled = !st.connected;
+  if (btnDisc) btnDisc.disabled = !st.connected;
+
+  // Paper width selection
+  const cols = window.EdenPrinter ? EdenPrinter.getCols() : 48;
+  const p58 = document.getElementById('paper-58');
+  const p80 = document.getElementById('paper-80');
+  if (p58) p58.classList.toggle('sel', cols === 32);
+  if (p80) p80.classList.toggle('sel', cols === 48);
+
+  // Support note / fallback explanation
+  const note = document.getElementById('printer-support-note');
+  if (note) {
+    if (!sup.usb && !sup.bluetooth) {
+      note.textContent = 'This browser has no USB/Bluetooth printing (e.g. Safari on iPhone). Receipts will print through the browser print dialog instead.';
+    } else {
+      note.textContent = 'Tip: connecting must be done by a tap here (browser security). USB may need a WinUSB driver on Windows. On phones, use Chrome for Bluetooth.';
+    }
+  }
+}
+
+function openPrinter() { document.getElementById('printer-modal').classList.add('active'); printerMsg(''); refreshPrinterUI(); }
+function closePrinter() { document.getElementById('printer-modal').classList.remove('active'); }
+
+async function connectPrinter(kind) {
+  printerMsg('Opening device picker…');
+  try {
+    if (kind === 'usb') await EdenPrinter.connectUSB();
+    else await EdenPrinter.connectBluetooth();
+    printerMsg('Printer connected.', 'ok');
+  } catch (err) {
+    // User cancelling the chooser throws — treat that quietly.
+    if (err && (err.name === 'NotFoundError' || /cancel/i.test(err.message || ''))) printerMsg('No printer selected.');
+    else printerMsg(err && err.message ? err.message : 'Could not connect.', 'err');
+  }
+  refreshPrinterUI();
+}
+
+async function disconnectPrinter() {
+  try { await EdenPrinter.disconnect(); printerMsg('Disconnected.'); } catch (e) {}
+  refreshPrinterUI();
+}
+
+function setPaper(cols) { if (window.EdenPrinter) EdenPrinter.setCols(cols); refreshPrinterUI(); }
+
+async function testPrint() {
+  const testOrder = {
+    id: 'ORD-000000', location: 'okc', customer: { name: 'TEST PRINT' },
+    items: [{ name: 'Smash Hamburger', options: ['American', 'Lettuce', 'Add Bacon'], quantity: 1, total: 14 }],
+    subtotal: 14, discount: 0, promoCode: null, total: 14, payment: 'cash', paid: true,
+    timestamp: new Date().toISOString()
+  };
+  try { await EdenPrinter.printOrder(testOrder); printerMsg('Test receipt sent.', 'ok'); }
+  catch (err) { printerMsg(err && err.message ? err.message : 'Test print failed.', 'err'); }
+}
+
+if (window.EdenPrinter) EdenPrinter.onChange(refreshPrinterUI);
+refreshPrinterUI();
+
+async function load() {
+  const res = await fetch('menu.json', { cache: 'no-store' });
+  const data = await res.json();
+  const root = document.getElementById('menu-root');
+  root.innerHTML = Object.keys(data).map(key => `
+    <section class="menu-section">
+      <h2 class="section-title">${SECTION_TITLES[key] || key}</h2>
+      <div class="menu-list">
+        ${data[key].map((item, i) => renderItem(item, `${key}-${i}`)).join('')}
+      </div>
+    </section>
+  `).join('');
+}
+load();
+</script>
+</body>
+</html>

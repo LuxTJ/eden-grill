@@ -1,0 +1,575 @@
+{
+  "onBread": [
+    {
+      "name": "Smash Hamburger",
+      "price": 12,
+      "description": "w/ Cheese — American or Provolone",
+      "optionGroups": [
+        {
+          "label": "Pick Your Cheese",
+          "type": "radio",
+          "options": [
+            "American",
+            "Provolone"
+          ]
+        },
+        {
+          "label": "Pick Your Toppings",
+          "type": "checkbox",
+          "options": [
+            "Lettuce",
+            "Tomato",
+            "Pickle",
+            "Raw Onions",
+            "Grilled Onions",
+            "Grilled Mushrooms",
+            "Jalapenos"
+          ]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": [
+            "Mustard",
+            "Mayonnaise",
+            "Ketchup",
+            "Thousand Island",
+            "BBQ",
+            "A1"
+          ]
+        },
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Add Egg", "price": 1 },
+            { "name": "Add Bacon", "price": 2 },
+            { "name": "Add Extra Patty", "price": 4 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Patty Melt",
+      "price": 10,
+      "description": "w/ Grilled Onions",
+      "optionGroups": []
+    },
+    {
+      "name": "Grilled Chicken Sandwich",
+      "price": 12,
+      "description": "Lettuce, Tomato, Pickles & Sauce",
+      "optionGroups": [
+        {
+          "label": "Pick Your Toppings",
+          "type": "checkbox",
+          "options": [
+            "Lettuce",
+            "Tomato",
+            "Pickles"
+          ]
+        },
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Add Cheese", "price": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Grilled Cheese",
+      "price": 8,
+      "optionGroups": [
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Add Bacon", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "BLT",
+      "price": 9,
+      "optionGroups": [
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Add Cheese", "price": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Club Sandwich",
+      "price": 10,
+      "optionGroups": []
+    }
+  ],
+  "onTortilla": [
+    {
+      "name": "Street Taco",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Tortilla",
+          "type": "radio",
+          "options": [
+            "Soft Corn",
+            "Flour"
+          ]
+        },
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": [
+            "Chicken",
+            "Steak",
+            "Ground Beef"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Quesadilla",
+      "price": 8,
+      "optionGroups": [
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Add a Meat", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Breakfast Tacos",
+      "price": 5,
+      "description": "Egg, Potato & Cheese",
+      "optionGroups": [
+        {
+          "label": "Add a Meat (+$2 each)",
+          "type": "checkbox",
+          "options": [
+            { "name": "Steak", "price": 2 },
+            { "name": "Bacon", "price": 2 },
+            { "name": "Sausage", "price": 2 },
+            { "name": "Chicken", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nachos",
+      "price": 8,
+      "optionGroups": []
+    },
+    {
+      "name": "Loaded Nachos",
+      "price": 12,
+      "description": "Lettuce, Pico, Sour Cream, Salsa & One Meat",
+      "optionGroups": [
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": [
+            "Chicken",
+            "Steak",
+            "Ground Beef",
+            "Pork"
+          ]
+        },
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Extra Meat", "price": 2 }
+          ]
+        }
+      ]
+    }
+  ],
+  "onFry": [
+    {
+      "name": "Chicken Wings (6)",
+      "price": 12,
+      "optionGroups": [
+        {
+          "label": "Wet Sauce",
+          "type": "checkbox",
+          "options": [
+            "Franks Hot",
+            "BBQ"
+          ]
+        },
+        {
+          "label": "Dry Rub",
+          "type": "checkbox",
+          "options": [
+            "Lemon Pepper",
+            "Garlic Parm",
+            "Ranch"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Crinkle Fries or Tots",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Style",
+          "type": "radio",
+          "options": [
+            "Crinkle Fries",
+            "Tots"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Loaded Crinkle Fries or Tots",
+      "price": 12,
+      "description": "w/ Cheese Sauce & One Meat",
+      "optionGroups": [
+        {
+          "label": "Pick Your Style",
+          "type": "radio",
+          "options": [
+            "Crinkle Fries",
+            "Tots"
+          ]
+        },
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": [
+            "Chicken",
+            "Steak",
+            "Ground Beef",
+            "Bacon",
+            "Breakfast Sausage"
+          ]
+        },
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Extra Meat", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cheese Sticks (5)",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Sauce",
+          "type": "radio",
+          "options": [
+            "Ranch",
+            "Marinara"
+          ]
+        }
+      ]
+    }
+  ],
+  "drinks": [
+    {
+      "name": "Bag of Chips",
+      "price": 2,
+      "optionGroups": []
+    },
+    {
+      "name": "Bottle of Water",
+      "price": 2,
+      "optionGroups": []
+    },
+    {
+      "name": "Can Drink",
+      "price": 2,
+      "optionGroups": [
+        {
+          "label": "Pick Your Drink",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Monster or Red Bull",
+      "price": 5,
+      "optionGroups": [
+        {
+          "label": "Pick Your Energy Drink",
+          "type": "radio",
+          "options": [
+            "Monster",
+            "Red Bull"
+          ]
+        }
+      ]
+    }
+  ],
+  "combos": [
+    {
+      "name": "For Two: 2 Cheese Burgers",
+      "price": 30,
+      "description": "2 Cheese Burgers, 2 Fries or Tots, 2 Soda Drinks or Water",
+      "optionGroups": [
+        {
+          "label": "Side",
+          "type": "radio",
+          "options": [
+            "Fries",
+            "Tots"
+          ]
+        },
+        {
+          "label": "Drink 1",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        },
+        {
+          "label": "Drink 2",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "For Two: 2 Breakfast Tacos",
+      "price": 20,
+      "description": "2 Breakfast Tacos, 2 Tots, 2 Soda Drinks or Water",
+      "optionGroups": [
+        {
+          "label": "Drink 1",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        },
+        {
+          "label": "Drink 2",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "For One: 6 Wings",
+      "price": 15,
+      "description": "6 Wings, Fries or Tots, 1 Soda Drink or Water",
+      "optionGroups": [
+        {
+          "label": "Side",
+          "type": "radio",
+          "options": [
+            "Fries",
+            "Tots"
+          ]
+        },
+        {
+          "label": "Pick Your Drink",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "For One: Cheese Burger",
+      "price": 15,
+      "description": "Cheese Burger, Fries or Tots, Soda Drink or Water",
+      "optionGroups": [
+        {
+          "label": "Side",
+          "type": "radio",
+          "options": [
+            "Fries",
+            "Tots"
+          ]
+        },
+        {
+          "label": "Pick Your Drink",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "For One: Grilled Chicken Sandwich",
+      "price": 15,
+      "description": "Grilled Chicken Sandwich, Fries or Tots, Soda Drink or Water",
+      "optionGroups": [
+        {
+          "label": "Side",
+          "type": "radio",
+          "options": [
+            "Fries",
+            "Tots"
+          ]
+        },
+        {
+          "label": "Pick Your Drink",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "For One: BLT",
+      "price": 15,
+      "description": "BLT, Chips, Soda Drink or Water",
+      "optionGroups": [
+        {
+          "label": "Pick Your Drink",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "For One: Chef Salad",
+      "price": 15,
+      "description": "Chef Salad with a Meat & a Soda Drink or Water. Lettuce, Tomato, Cucumber, Bell Pepper, Celery, Carrot & Dressing",
+      "optionGroups": [
+        {
+          "label": "Pick Your Dressing",
+          "type": "radio",
+          "options": [
+            "Ranch",
+            "Thousand Island",
+            "Vinaigrette",
+            "Italian"
+          ]
+        },
+        {
+          "label": "Pick Your Drink",
+          "type": "radio",
+          "options": [
+            "Coke",
+            "Diet Coke",
+            "Sprite",
+            "Diet Sprite",
+            "Dr Pepper",
+            "Diet Dr Pepper",
+            "Water"
+          ]
+        }
+      ]
+    }
+  ],
+  "lateNight": [
+    {
+      "name": "Fries or Street Tacos",
+      "price": 6,
+      "description": "Late Night Menu 9:00pm – 1:00am",
+      "optionGroups": []
+    },
+    {
+      "name": "Breakfast Tacos",
+      "price": 5,
+      "description": "Late Night Menu 9:00pm – 1:00am",
+      "optionGroups": []
+    },
+    {
+      "name": "Quesadilla",
+      "price": 8,
+      "description": "Late Night Menu 9:00pm – 1:00am",
+      "optionGroups": []
+    },
+    {
+      "name": "Grilled Cheese",
+      "price": 8,
+      "description": "Late Night Menu 9:00pm – 1:00am",
+      "optionGroups": []
+    },
+    {
+      "name": "Loaded Nachos",
+      "price": 12,
+      "description": "Late Night Menu 9:00pm – 1:00am",
+      "optionGroups": []
+    },
+    {
+      "name": "Loaded Tots & Fries",
+      "price": 12,
+      "description": "Late Night Menu 9:00pm – 1:00am",
+      "optionGroups": []
+    }
+  ]
+}
