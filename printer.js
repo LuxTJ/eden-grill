@@ -39,9 +39,11 @@
   const WIDTH_KEY = 'edenGrillPaperCols';
   function cols() {
     const n = parseInt(localStorage.getItem(WIDTH_KEY) || '48', 10);
-    return n === 32 ? 32 : 48;
+    if (n === 32) return 32;
+    if (n === 64) return 64;
+    return 48;
   }
-  function setCols(n) { localStorage.setItem(WIDTH_KEY, String(n === 32 ? 32 : 48)); }
+  function setCols(n) { localStorage.setItem(WIDTH_KEY, String(n === 32 ? 32 : n === 64 ? 64 : 48)); }
 
   // ----- text -> bytes (CP437-ish; strip anything the printer can't render) -----
   function sanitize(s) {
@@ -199,12 +201,16 @@
   }
 
   // ----- Web Bluetooth -----
-  // Service UUIDs used by common generic thermal printers.
+  // Service UUIDs used by common generic thermal/label printers.
   const BT_SERVICES = [
     0x18f0, 0xff00, 0xffe0, 0xff12,
-    '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC transparent UART (many cheap 58mm printers)
+    '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC transparent UART
     '0000ff00-0000-1000-8000-00805f9b34fb',
     '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
+    '0000fee7-0000-1000-8000-00805f9b34fb', // Common Chinese label printers
+    '0000fff0-0000-1000-8000-00805f9b34fb', // Another generic UUID
+    '00001101-0000-1000-8000-00805f9b34fb', // SPP serial port profile
+    '00001800', '00001801',                  // Generic Access / Attribute
   ];
 
   async function connectBluetooth() {

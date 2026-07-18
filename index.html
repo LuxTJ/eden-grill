@@ -136,6 +136,7 @@
       <div class="paper-select">
         <button id="paper-58" onclick="setPaper(32)">58mm</button>
         <button id="paper-80" onclick="setPaper(48)">80mm</button>
+        <button id="paper-4x6" onclick="setPaper(64)">4x6"</button>
       </div>
       <p class="printer-note" id="printer-support-note"></p>
     </div>
@@ -439,6 +440,7 @@ function refreshPrinterUI() {
   var cols = window.EdenPrinter ? EdenPrinter.getCols() : 48;
   document.getElementById('paper-58').classList.toggle('sel', cols === 32);
   document.getElementById('paper-80').classList.toggle('sel', cols === 48);
+  document.getElementById('paper-4x6').classList.toggle('sel', cols === 64);
   var note = document.getElementById('printer-support-note');
   if (note) note.textContent = (!sup.usb && !sup.bluetooth) ? 'No USB/BT support — receipts use browser print dialog.' : 'USB may need WinUSB driver (Zadig). Use Chrome for Bluetooth.';
 }
