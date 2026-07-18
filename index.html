@@ -412,7 +412,7 @@ function receiptHtml(order, copyLabel) {
 
 function printReceipts(order) {
   document.getElementById('print-area').innerHTML =
-    receiptHtml(order, 'CUSTOMER COPY') + receiptHtml(order, 'KITCHEN COPY');
+    receiptHtml(order, 'CUSTOMER COPY') + receiptHtml(order, 'CUSTOMER COPY');
   window.print();
 }
 
