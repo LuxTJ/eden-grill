@@ -174,6 +174,59 @@
           "options": ["Ranch", "Marinara"]
         }
       ]
+    },
+    {
+      "name": "Crinkle Fries or Tots",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Style",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Mustard", "Ketchup", "Mayonnaise", "Thousand Island", "NO Sauce"]
+        },
+        {
+          "label": "Extra Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Cheese Sauce", "price": 2 },
+            { "name": "Shredded Cheese", "price": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Loaded Crinkle Fries or Tots",
+      "price": 12,
+      "optionGroups": [
+        {
+          "label": "Pick Your Style",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Pick Your Meat",
+          "type": "radio",
+          "options": ["No Meat", "Chicken", "Steak", "Ground Beef", "Bacon", "Breakfast Sausage"]
+        },
+        {
+          "label": "Pick Your Sauce/Toppings",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Pico", "Jalapenos", "No Sauce"]
+        },
+        {
+          "label": "Extra Add-Ons",
+          "type": "checkbox",
+          "options": [
+            { "name": "Extra Meat", "price": 2 },
+            { "name": "Extra Cheese", "price": 1 }
+          ]
+        }
+      ]
     }
   ],
   "combos": [
