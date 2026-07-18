@@ -133,7 +133,7 @@
 
     b.raw(CMD.ALIGN_CENTER).line('Made to order - Thank you!');
     b.line(dateStr + '  ' + timeStr);
-    b.raw(CMD.ALIGN_LEFT).feed(2).raw(CMD.FEED_CUT);
+    b.raw(CMD.ALIGN_LEFT).feed(8).raw([0x0c]);
     return b.toBytes();
   }
 
@@ -264,7 +264,7 @@
     if (!conn) throw new Error('No printer connected.');
     const customer = buildCopy(order, 'CUSTOMER COPY');
     await conn.send(customer);
-    await delay(500);
+    await delay(1500);
     const kitchen = buildCopy(order, 'KITCHEN COPY');
     await conn.send(kitchen);
   }
