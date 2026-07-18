@@ -23,9 +23,12 @@
   /* Receipt print area — hidden on screen, shown only when printing */
   #print-area { display: none; }
   @media print {
-    body * { visibility: hidden; }
-    #print-area, #print-area * { visibility: visible; }
-    #print-area { display: block; position: absolute; left: 0; top: 0; width: 100%; }
+    /* Remove everything except the receipts from layout so the (tall) menu
+       doesn't generate blank pages. display:none removes layout height;
+       visibility:hidden would keep it and print extra blank sheets. */
+    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block !important; }
     .receipt { width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; background: #fff;
       font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; page-break-after: always; }
     .receipt:last-child { page-break-after: auto; }
