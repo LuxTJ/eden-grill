@@ -532,38 +532,32 @@ function renderReports() {
 
   var today = new Date(); today.setHours(0,0,0,0);
   var todayOrders = all.filter(function(o) { return new Date(o.timestamp) >= today; });
-  var todayTotal = todayOrders.reduce(function(s, o) { return s + o.total; }, 0);
-  var allTotal = all.reduce(function(s, o) { return s + o.total; }, 0);
 
   var itemMap = {};
   all.forEach(function(o) {
     (o.items || []).forEach(function(it) {
       var key = it.name;
-      if (!itemMap[key]) itemMap[key] = { qty: 0, revenue: 0 };
-      itemMap[key].qty += it.quantity || 1;
-      itemMap[key].revenue += it.total || 0;
+      if (!itemMap[key]) itemMap[key] = 0;
+      itemMap[key] += it.quantity || 1;
     });
   });
-  var sorted = Object.keys(itemMap).sort(function(a, b) { return itemMap[b].qty - itemMap[a].qty; });
+  var sorted = Object.keys(itemMap).sort(function(a, b) { return itemMap[b] - itemMap[a]; });
 
   var html = '';
   html += '<div class="report-summary"><div class="report-stat"><span class="report-stat-val">' + all.length + '</span><span class="report-stat-label">Total Orders</span></div>';
-  html += '<div class="report-stat"><span class="report-stat-val">$' + allTotal.toFixed(2) + '</span><span class="report-stat-label">All-Time Revenue</span></div>';
-  html += '<div class="report-stat"><span class="report-stat-val">' + todayOrders.length + '</span><span class="report-stat-label">Today Orders</span></div>';
-  html += '<div class="report-stat"><span class="report-stat-val">$' + todayTotal.toFixed(2) + '</span><span class="report-stat-label">Today Revenue</span></div></div>';
+  html += '<div class="report-stat"><span class="report-stat-val">' + todayOrders.length + '</span><span class="report-stat-label">Today Orders</span></div></div>';
 
   html += '<div class="report-section"><h3>Items Sold (All Time)</h3>';
-  html += '<table class="report-table"><tr><th>Item</th><th>Qty</th><th>Revenue</th></tr>';
+  html += '<table class="report-table"><tr><th>Item</th><th>Qty</th></tr>';
   sorted.forEach(function(key) {
-    var d = itemMap[key];
-    html += '<tr><td>' + key + '</td><td>' + d.qty + '</td><td>$' + d.revenue.toFixed(2) + '</td></tr>';
+    html += '<tr><td>' + key + '</td><td>' + itemMap[key] + '</td></tr>';
   });
   html += '</table></div>';
 
   html += '<div class="report-section"><h3>Today Orders</h3>';
   todayOrders.slice().reverse().forEach(function(o) {
     var when = new Date(o.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span><span>$' + o.total.toFixed(2) + '</span></div>';
+    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span></div>';
     html += '<div class="report-order-items">' + (o.items || []).map(function(it) { return it.quantity + 'x ' + it.name; }).join(', ') + '</div></div>';
   });
   html += '</div>';
