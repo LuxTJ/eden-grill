@@ -1,26 +1,6 @@
-/*
- * Eden Grill — thermal receipt printing.
- *
- * Sends real ESC/POS commands to a receipt printer over either:
- *   - USB      (WebUSB)        — Chrome/Edge on desktop & Android
- *   - Bluetooth (Web Bluetooth) — Chrome/Edge on desktop & Android
- *
- * iOS Safari exposes neither API; index.html falls back to window.print()
- * (the browser print dialog) automatically when no thermal printer is connected.
- *
- * Public surface (window.EdenPrinter):
- *   isSupported()            -> { usb, bluetooth }
- *   status()                 -> { connected, kind, name }
- *   connectUSB()             -> connect a USB printer (must be a user gesture)
- *   connectBluetooth()       -> connect a BT printer (must be a user gesture)
- *   disconnect()
- *   printOrder(order)        -> print customer + kitchen copies as ESC/POS
- *   onChange(fn)             -> subscribe to connection-status changes
- */
 (function () {
   'use strict';
 
-  // ----- ESC/POS command bytes -----
   const ESC = 0x1b, GS = 0x1d, LF = 0x0a;
   const CMD = {
     INIT:        [ESC, 0x40],
@@ -30,12 +10,10 @@
     BOLD_ON:     [ESC, 0x45, 1],
     BOLD_OFF:    [ESC, 0x45, 0],
     SIZE_NORMAL: [GS, 0x21, 0x00],
-    SIZE_DOUBLE: [GS, 0x21, 0x11], // double width + height
-    SIZE_TALL:   [GS, 0x21, 0x01], // double height only
-    FEED_CUT:    [GS, 0x56, 0x42, 0x03], // feed 3 then partial cut (ignored by cheap printers)
+    SIZE_DOUBLE: [GS, 0x21, 0x11],
+    SIZE_TALL:   [GS, 0x21, 0x01],
   };
 
-  // Paper columns: 58mm rolls ~32 chars, 80mm rolls ~48 chars (Font A).
   const WIDTH_KEY = 'edenGrillPaperCols';
   function cols() {
     const n = parseInt(localStorage.getItem(WIDTH_KEY) || '48', 10);
@@ -45,70 +23,58 @@
   }
   function setCols(n) { localStorage.setItem(WIDTH_KEY, String(n === 32 ? 32 : n === 64 ? 64 : 48)); }
 
-  // ----- text -> bytes (CP437-ish; strip anything the printer can't render) -----
   function sanitize(s) {
     return String(s)
-      .replace(/[—–]/g, '-')  // em/en dash
-      .replace(/[‘’]/g, "'")  // curly single quotes
-      .replace(/[“”]/g, '"')  // curly double quotes
-      .replace(/[·•]/g, '*')  // middot / bullet
-      .replace(/[^\x20-\x7E]/g, '');    // drop remaining non-printable ASCII
+      .replace(/[—–]/g, '-')
+      .replace(/[‘’]/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/[·•]/g, '*')
+      .replace(/[^\x20-\x7E]/g, '');
   }
 
-  // Growable byte buffer, so callers can compose a receipt line by line.
   function Buffer() {
     let bytes = [];
-    const api = {
-      raw(arr) { for (let i = 0; i < arr.length; i++) bytes.push(arr[i] & 0xff); return api; },
-      text(s) { const t = sanitize(s); for (let i = 0; i < t.length; i++) bytes.push(t.charCodeAt(i) & 0xff); return api; },
-      line(s) { if (s) api.text(s); bytes.push(LF); return api; },
-      feed(n) { for (let i = 0; i < (n || 1); i++) bytes.push(LF); return api; },
-      // Two-column row: left-justified label, right-justified value, on one line.
+    return {
+      raw(arr) { for (let i = 0; i < arr.length; i++) bytes.push(arr[i] & 0xff); return this; },
+      text(s) { const t = sanitize(s); for (let i = 0; i < t.length; i++) bytes.push(t.charCodeAt(i) & 0xff); return this; },
+      line(s) { if (s) this.text(s); bytes.push(LF); return this; },
+      feed(n) { for (let i = 0; i < (n || 1); i++) bytes.push(LF); return this; },
       row(left, right) {
         const w = cols();
         left = sanitize(left); right = sanitize(right);
         const space = w - left.length - right.length;
-        if (space >= 1) return api.line(left + ' '.repeat(space) + right);
-        // Too long for one line: put the value on its own right-aligned line.
-        api.line(left);
-        const pad = Math.max(0, w - right.length);
-        return api.line(' '.repeat(pad) + right);
+        if (space >= 1) return this.line(left + ' '.repeat(space) + right);
+        this.line(left);
+        return this.line(' '.repeat(Math.max(0, w - right.length)) + right);
       },
-      rule() { return api.line('-'.repeat(cols())); },
+      rule() { return this.line('-'.repeat(cols())); },
       toBytes() { return new Uint8Array(bytes); },
     };
-    return api;
   }
 
   function fmtMoney(n) { return '$' + Number(n).toFixed(2); }
 
-  // Build one receipt copy as ESC/POS bytes.
-  function buildCopy(order, copyLabel) {
+  // ----- Customer Receipt (detailed with pricing) -----
+  function buildCustomerReceipt(order) {
     const b = Buffer();
     const when = new Date(order.timestamp);
     const dateStr = when.toLocaleDateString([], { year: 'numeric', month: '2-digit', day: '2-digit' });
     const timeStr = when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     b.raw(CMD.INIT);
-
-    // Header
     b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('EDEN GRILL').raw(CMD.SIZE_NORMAL).raw(CMD.BOLD_OFF);
     b.line('OKC');
-    b.raw(CMD.BOLD_ON).line(copyLabel).raw(CMD.BOLD_OFF);
+    b.raw(CMD.BOLD_ON).line('CUSTOMER RECEIPT').raw(CMD.BOLD_OFF);
     b.raw(CMD.ALIGN_LEFT).rule();
-
-    // Order meta — the timestamp prints clearly here (date + time).
     b.row('Order #', order.id.replace('ORD-', ''));
     b.row('Date', dateStr);
     b.row('Time', timeStr);
     b.row('Name', order.customer && order.customer.name ? order.customer.name : '-');
     b.rule();
 
-    // Items
     order.items.forEach(function (it) {
       b.row(it.quantity + 'x ' + it.name, fmtMoney(it.total));
       if (it.options && it.options.length) {
-        // Wrap options under the item, indented.
         const w = cols() - 2;
         let lineBuf = '';
         it.options.forEach(function (opt) {
@@ -122,7 +88,6 @@
     });
     b.rule();
 
-    // Totals
     const sub = order.subtotal != null ? order.subtotal : order.total;
     b.row('Subtotal', fmtMoney(sub));
     if (order.discount) {
@@ -131,98 +96,105 @@
     b.raw(CMD.BOLD_ON).raw(CMD.SIZE_TALL).row('TOTAL', fmtMoney(order.total)).raw(CMD.SIZE_NORMAL).raw(CMD.BOLD_OFF);
     b.row('Paid', 'CASH');
     b.rule();
-
     b.raw(CMD.ALIGN_CENTER).line('Made to order - Thank you!');
     b.line(dateStr + '  ' + timeStr);
     b.raw(CMD.ALIGN_LEFT).feed(8).raw([0x0c]);
     return b.toBytes();
   }
 
-  function buildOrderBytes(order) {
-    // Customer copy + kitchen copy = 2 copies.
-    const a = buildCopy(order, 'CUSTOMER COPY');
-    const c = buildCopy(order, 'KITCHEN COPY');
-    const out = new Uint8Array(a.length + c.length);
-    out.set(a, 0); out.set(c, a.length);
-    return out;
+  // ----- Kitchen Ticket (simplified, no pricing) -----
+  function buildKitchenTicket(order) {
+    const b = Buffer();
+    const when = new Date(order.timestamp);
+    const timeStr = when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    b.raw(CMD.INIT);
+    b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('KITCHEN TICKET').raw(CMD.SIZE_NORMAL).raw(CMD.BOLD_OFF);
+    b.raw(CMD.ALIGN_LEFT).rule();
+    b.row('Order #', order.id.replace('ORD-', ''));
+    b.row('Time', timeStr);
+    b.row('Name', order.customer && order.customer.name ? order.customer.name : '-');
+    b.rule();
+
+    order.items.forEach(function (it) {
+      b.raw(CMD.BOLD_ON).line(it.quantity + 'x ' + it.name).raw(CMD.BOLD_OFF);
+      if (it.options && it.options.length) {
+        const w = cols() - 2;
+        let lineBuf = '';
+        it.options.forEach(function (opt) {
+          const piece = (lineBuf ? ', ' : '') + opt;
+          if ((lineBuf + piece).length > w) { b.line('  ' + lineBuf); lineBuf = opt; }
+          else { lineBuf += piece; }
+        });
+        if (lineBuf) b.line('  ' + lineBuf);
+      }
+      if (it.note) { b.line('  -> ' + it.note); }
+      b.line('');
+    });
+    b.rule();
+    b.raw(CMD.ALIGN_CENTER).line('Fire when ready!');
+    b.raw(CMD.ALIGN_LEFT).feed(6).raw([0x0c]);
+    return b.toBytes();
   }
 
-  // ----- connection state -----
-  let conn = null; // { kind:'usb'|'bluetooth', name, send(bytes), close() }
+  // ----- connection state (single printer, two jobs) -----
+  let conn = null;
   const listeners = [];
-  function notify() { listeners.forEach(function (fn) { try { fn(status()); } catch (e) {} }); }
+
   function status() {
-    return conn
-      ? { connected: true, kind: conn.kind, name: conn.name }
-      : { connected: false, kind: null, name: null };
+    return { connected: !!conn, kind: conn ? conn.kind : null, name: conn ? conn.name : null };
   }
+  function notify() { listeners.forEach(function (fn) { try { fn(status()); } catch (e) {} }); }
 
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-  // ----- WebUSB -----
+  // ----- connection helpers (reused for both targets) -----
+  function isSup() { return { usb: 'usb' in navigator, bluetooth: 'bluetooth' in navigator }; }
+
   async function connectUSB() {
-    if (!('usb' in navigator)) throw new Error('WebUSB is not supported in this browser. Use Chrome or Edge on desktop/Android.');
+    if (!('usb' in navigator)) throw new Error('WebUSB not supported.');
     const device = await navigator.usb.requestDevice({ filters: [] });
     await device.open();
     if (device.configuration === null) await device.selectConfiguration(1);
-
-    // Find an interface with a bulk OUT endpoint (printer class 7, or any vendor iface).
-    let iface = null, endpoint = null;
+    let endpoint = null;
     for (const cfg of device.configurations) {
       for (const i of cfg.interfaces) {
         for (const alt of i.alternates) {
           const out = alt.endpoints.find(function (e) { return e.direction === 'out' && e.type === 'bulk'; });
-          if (out) { iface = i; endpoint = out; break; }
+          if (out) endpoint = out;
+          if (endpoint) break;
         }
         if (endpoint) break;
       }
       if (endpoint) break;
     }
-    if (!endpoint) { await device.close(); throw new Error('No compatible USB printer endpoint found on this device.'); }
-
-    try { await device.claimInterface(iface.interfaceNumber); }
-    catch (e) { await device.close(); throw new Error('Could not claim the USB printer. On Windows you may need to install a WinUSB driver (e.g. via Zadig).'); }
-
-    conn = {
+    if (!endpoint) { await device.close(); throw new Error('No compatible USB endpoint.'); }
+    try { await device.claimInterface(0); } catch (e) { await device.close(); throw new Error('Could not claim interface. Try Zadig for WinUSB driver.'); }
+    return {
       kind: 'usb',
-      name: (device.productName || 'USB printer'),
-      async send(bytes) {
-        const CHUNK = 4096;
-        for (let i = 0; i < bytes.length; i += CHUNK) {
-          await device.transferOut(endpoint.endpointNumber, bytes.slice(i, i + CHUNK));
-        }
+      name: device.productName || 'USB printer',
+      send: async function (bytes) {
+        for (let i = 0; i < bytes.length; i += 4096) { await device.transferOut(endpoint.endpointNumber, bytes.slice(i, i + 4096)); }
       },
-      async close() { try { await device.close(); } catch (e) {} },
+      close: async function () { try { await device.close(); } catch (e) {} },
     };
-    device.addEventListener && navigator.usb.addEventListener('disconnect', function (ev) {
-      if (conn && conn.kind === 'usb' && ev.device === device) { conn = null; notify(); }
-    });
-    notify();
-    return status();
   }
 
-  // ----- Web Bluetooth -----
-  // Service UUIDs used by common generic thermal/label printers.
   const BT_SERVICES = [
     0x18f0, 0xff00, 0xffe0, 0xff12,
-    '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC transparent UART
+    '49535343-fe7d-4ae5-8fa9-9fafd205e455',
     '0000ff00-0000-1000-8000-00805f9b34fb',
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
-    '0000fee7-0000-1000-8000-00805f9b34fb', // Common Chinese label printers
-    '0000fff0-0000-1000-8000-00805f9b34fb', // Another generic UUID
-    '00001101-0000-1000-8000-00805f9b34fb', // SPP serial port profile
-    '00001800', '00001801',                  // Generic Access / Attribute
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+    '0000fee7-0000-1000-8000-00805f9b34fb',
+    '0000fff0-0000-1000-8000-00805f9b34fb',
+    '00001101-0000-1000-8000-00805f9b34fb',
+    '00001800', '00001801',
   ];
 
   async function connectBluetooth() {
-    if (!('bluetooth' in navigator)) throw new Error('Web Bluetooth is not supported in this browser. Use Chrome or Edge on desktop/Android.');
-    const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: BT_SERVICES,
-    });
+    if (!('bluetooth' in navigator)) throw new Error('Web Bluetooth not supported.');
+    const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: BT_SERVICES });
     const server = await device.gatt.connect();
-
-    // Find any writable characteristic across the printer's services.
     let characteristic = null;
     const services = await server.getPrimaryServices();
     for (const svc of services) {
@@ -232,55 +204,97 @@
       }
       if (characteristic) break;
     }
-    if (!characteristic) { try { device.gatt.disconnect(); } catch (e) {} throw new Error('No writable characteristic found on this Bluetooth printer.'); }
-
+    if (!characteristic) { try { device.gatt.disconnect(); } catch (e) {} throw new Error('No writable characteristic found.'); }
     const withoutResponse = characteristic.properties.writeWithoutResponse;
-    conn = {
+    return {
       kind: 'bluetooth',
-      name: (device.name || 'Bluetooth printer'),
-      async send(bytes) {
-        // BLE MTU is small — send in ~180-byte chunks with a short pause.
-        const CHUNK = 180;
-        for (let i = 0; i < bytes.length; i += CHUNK) {
-          const slice = bytes.slice(i, i + CHUNK);
+      name: device.name || 'Bluetooth printer',
+      send: async function (bytes) {
+        for (let i = 0; i < bytes.length; i += 180) {
+          const slice = bytes.slice(i, i + 180);
           if (withoutResponse && characteristic.writeValueWithoutResponse) await characteristic.writeValueWithoutResponse(slice);
           else await characteristic.writeValue(slice);
           await delay(20);
         }
       },
-      async close() { try { device.gatt.disconnect(); } catch (e) {} },
+      close: async function () { try { device.gatt.disconnect(); } catch (e) {} },
     };
-    device.addEventListener('gattserverdisconnected', function () {
-      if (conn && conn.kind === 'bluetooth') { conn = null; notify(); }
-    });
+  }
+
+  // ----- connect / disconnect (single printer) -----
+  async function connectPrinter(kind) {
+    const p = kind === 'usb' ? await connectUSB() : await connectBluetooth();
+    if (conn) { try { conn.close(); } catch (e) {} }
+    conn = p;
     notify();
-    return status();
+    return p;
   }
 
-  async function disconnect() {
-    if (conn) { await conn.close(); conn = null; notify(); }
+  function disconnectPrinter() {
+    if (conn) { conn.close(); conn = null; }
+    notify();
   }
 
+  // ----- print order: both receipts as a single job -----
   async function printOrder(order) {
-    if (!conn) throw new Error('No printer connected.');
-    const customer = buildCopy(order, 'CUSTOMER COPY');
-    await conn.send(customer);
-    await delay(1500);
-    const kitchen = buildCopy(order, 'KITCHEN COPY');
-    await conn.send(kitchen);
+    if (!conn) return;
+    const custData = buildCustomerReceipt(order);
+    const kitchData = buildKitchenTicket(order);
+    const combined = new Uint8Array(custData.length + kitchData.length);
+    combined.set(custData, 0);
+    combined.set(kitchData, custData.length);
+    await conn.send(combined);
+  }
+
+  // ----- browser print fallback templates -----
+  function customerReceiptHtml(order) {
+    var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+    var items = order.items.map(function (i) {
+      return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
+        (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '') +
+        (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
+    }).join('');
+    var sub = order.subtotal != null ? order.subtotal : order.total;
+    return '<div class="receipt">' +
+      '<div class="r-center r-title">EDEN GRILL</div><div class="r-center">OKC</div><div class="r-center r-copy">CUSTOMER RECEIPT</div><hr>' +
+      '<div class="r-row"><span>Order #</span><span>' + order.id.replace('ORD-', '') + '</span></div>' +
+      '<div class="r-row"><span>Date</span><span>' + when + '</span></div>' +
+      '<div class="r-row"><span>Name</span><span>' + order.customer.name + '</span></div><hr>' +
+      items + '<hr>' +
+      '<div class="r-row"><span>Subtotal</span><span>$' + Number(sub).toFixed(2) + '</span></div>' +
+      (order.discount ? '<div class="r-row"><span>Discount</span><span>-$' + Number(order.discount).toFixed(2) + '</span></div>' : '') +
+      '<div class="r-row r-total"><span>TOTAL</span><span>$' + Number(order.total).toFixed(2) + '</span></div>' +
+      '<div class="r-row"><span>Paid</span><span>CASH</span></div><hr>' +
+      '<div class="r-foot">Made to order - Thank you!</div></div>';
+  }
+
+  function kitchenTicketHtml(order) {
+    var when = new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var items = order.items.map(function (i) {
+      return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span></div>' +
+        (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '') +
+        (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
+    }).join('');
+    return '<div class="receipt kitchen-ticket">' +
+      '<div class="r-center r-title">KITCHEN TICKET</div><hr>' +
+      '<div class="r-row"><span>Order #</span><span>' + order.id.replace('ORD-', '') + '</span></div>' +
+      '<div class="r-row"><span>Time</span><span>' + when + '</span></div>' +
+      '<div class="r-row"><span>Name</span><span>' + order.customer.name + '</span></div><hr>' +
+      items + '<hr>' +
+      '<div class="r-foot">Fire when ready!</div></div>';
   }
 
   window.EdenPrinter = {
-    isSupported: function () { return { usb: 'usb' in navigator, bluetooth: 'bluetooth' in navigator }; },
+    isSupported: isSup,
     status: status,
-    connectUSB: connectUSB,
-    connectBluetooth: connectBluetooth,
-    disconnect: disconnect,
+    connectUSB: function () { return connectPrinter('usb'); },
+    connectBluetooth: function () { return connectPrinter('bluetooth'); },
+    disconnect: disconnectPrinter,
     printOrder: printOrder,
+    customerReceiptHtml: customerReceiptHtml,
+    kitchenTicketHtml: kitchenTicketHtml,
     onChange: function (fn) { listeners.push(fn); },
     getCols: cols,
     setCols: function (n) { setCols(n); notify(); },
-    // Exposed for testing the byte builder.
-    _buildOrderBytes: buildOrderBytes,
   };
 })();

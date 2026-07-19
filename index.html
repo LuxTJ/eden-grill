@@ -128,14 +128,15 @@
       <button class="modal-close" onclick="closePrinter()">✕</button>
     </div>
     <div class="printer-settings">
+      <h3>Thermal Printer</h3>
       <div class="printer-status-row">
         <span class="printer-dot" id="printer-status-dot"></span>
         <span id="printer-status-text">Not connected</span>
       </div>
       <button class="printer-action-btn primary" id="btn-usb" onclick="connectPrinter('usb')">Connect USB Printer</button>
       <button class="printer-action-btn primary" id="btn-bt" onclick="connectPrinter('bluetooth')">Connect Bluetooth Printer</button>
-      <button class="printer-action-btn" id="btn-test" onclick="testPrint()">Print Test Receipt</button>
       <button class="printer-action-btn danger" id="btn-disc" onclick="disconnectPrinter()">Disconnect</button>
+      <button class="printer-action-btn" id="btn-test" onclick="testPrint()">Print Test</button>
       <div class="printer-msg" id="printer-msg"></div>
       <div class="paper-select">
         <button id="paper-58" onclick="setPaper(32)">58mm</button>
@@ -152,7 +153,10 @@
   <div class="modifier-panel report-panel">
     <div class="modifier-header">
       <h2>Sales Reports</h2>
-      <button class="modal-close" onclick="closeReports()">✕</button>
+      <div class="report-header-actions">
+        <button class="pos-btn pos-btn-ghost danger-btn" onclick="clearAllOrders()">Clear All</button>
+        <button class="modal-close" onclick="closeReports()">✕</button>
+      </div>
     </div>
     <div class="report-body" id="report-body"></div>
   </div>
@@ -389,7 +393,7 @@ async function placeOrder() {
   }
 
   closeCart();
-  var tail = printedVia === 'thermal' ? 'printing on thermal printer.' : 'customer copy sent to print.';
+  var tail = printedVia === 'thermal' ? 'both receipts printing on thermal printer.' : 'customer copy sent to print.';
   document.getElementById('confirmation-text').textContent =
     'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — ' + tail + ' Hand customer copy to guest, kitchen copy to cook.';
   document.getElementById('btn-print-kitchen').style.display = pendingKitchenOrder ? '' : 'none';
@@ -464,10 +468,8 @@ function printerMsg(text, kind) {
 function refreshPrinterUI() {
   var st = window.EdenPrinter ? EdenPrinter.status() : { connected: false };
   var sup = window.EdenPrinter ? EdenPrinter.isSupported() : { usb: false, bluetooth: false };
-  document.getElementById('printer-dot').classList.toggle('on', st.connected);
-  var sdot = document.getElementById('printer-status-dot');
+  document.getElementById('printer-status-dot').classList.toggle('on', st.connected);
   var stext = document.getElementById('printer-status-text');
-  if (sdot) sdot.classList.toggle('on', st.connected);
   if (stext) stext.textContent = st.connected ? 'Connected: ' + st.name + ' (' + (st.kind === 'usb' ? 'USB' : 'BT') + ')' : 'Not connected';
   var btnUsb = document.getElementById('btn-usb');
   var btnBt = document.getElementById('btn-bt');
@@ -477,10 +479,6 @@ function refreshPrinterUI() {
   if (btnBt) { btnBt.disabled = !sup.bluetooth; btnBt.textContent = sup.bluetooth ? 'Connect Bluetooth Printer' : 'BT not supported'; }
   if (btnTest) btnTest.disabled = !st.connected;
   if (btnDisc) btnDisc.disabled = !st.connected;
-  var cols = window.EdenPrinter ? EdenPrinter.getCols() : 48;
-  document.getElementById('paper-58').classList.toggle('sel', cols === 32);
-  document.getElementById('paper-80').classList.toggle('sel', cols === 48);
-  document.getElementById('paper-4x6').classList.toggle('sel', cols === 64);
   var note = document.getElementById('printer-support-note');
   if (note) note.textContent = (!sup.usb && !sup.bluetooth) ? 'No USB/BT support — receipts use browser print dialog.' : 'USB may need WinUSB driver (Zadig). Use Chrome for Bluetooth.';
 }
@@ -502,7 +500,7 @@ async function connectPrinter(kind) {
 }
 
 async function disconnectPrinter() {
-  try { await EdenPrinter.disconnect(); printerMsg('Disconnected.'); } catch (e) {}
+  try { EdenPrinter.disconnect(); printerMsg('Disconnected.'); } catch (e) {}
   refreshPrinterUI();
 }
 
@@ -520,6 +518,8 @@ async function testPrint() {
 }
 
 function openReports() {
+  var pin = prompt('Enter PIN to access reports:');
+  if (pin !== '7217') return;
   document.getElementById('reports-modal').classList.add('active');
   renderReports();
 }
@@ -557,12 +557,27 @@ function renderReports() {
   html += '<div class="report-section"><h3>Today Orders</h3>';
   todayOrders.slice().reverse().forEach(function(o) {
     var when = new Date(o.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span></div>';
+    var idx = all.indexOf(o);
+    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span><button class="report-del-btn" onclick="deleteOrder(' + idx + ')" title="Delete order">✕</button></div>';
     html += '<div class="report-order-items">' + (o.items || []).map(function(it) { return it.quantity + 'x ' + it.name; }).join(', ') + '</div></div>';
   });
   html += '</div>';
 
   body.innerHTML = html;
+}
+
+function deleteOrder(idx) {
+  if (!confirm('Delete order #' + (idx + 1) + '?')) return;
+  var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  all.splice(idx, 1);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  renderReports();
+}
+
+function clearAllOrders() {
+  if (!confirm('Clear ALL order history? This cannot be undone.')) return;
+  localStorage.setItem(STORAGE_KEY, '[]');
+  renderReports();
 }
 
 if (window.EdenPrinter) EdenPrinter.onChange(refreshPrinterUI);
