@@ -154,6 +154,7 @@
     <div class="modifier-header">
       <h2>Sales Reports</h2>
       <div class="report-header-actions">
+        <button class="pos-btn pos-btn-ghost" onclick="emailReport()">Email Report</button>
         <button class="pos-btn pos-btn-ghost danger-btn" onclick="clearAllOrders()">Clear All</button>
         <button class="modal-close" onclick="closeReports()">✕</button>
       </div>
@@ -405,6 +406,9 @@ async function placeOrder() {
   document.getElementById('promo-msg').className = 'promo-msg';
   document.getElementById('customer-name').value = '';
   updateOrderBar();
+
+  // Sync to KV (fire-and-forget — doesn't block checkout)
+  fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
 }
 
 function closeConfirmation() { document.getElementById('order-confirmation').classList.remove('active'); }
@@ -578,6 +582,20 @@ function clearAllOrders() {
   if (!confirm('Clear ALL order history? This cannot be undone.')) return;
   localStorage.setItem(STORAGE_KEY, '[]');
   renderReports();
+}
+
+async function emailReport() {
+  var btn = document.querySelector('.report-header-actions .pos-btn');
+  if (btn) btn.textContent = 'Sending…';
+  try {
+    var res = await fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    var data = await res.json();
+    if (data.ok) alert('Report sent to email!');
+    else alert(data.error || 'Could not send report.');
+  } catch (e) {
+    alert('Could not send report: ' + e.message);
+  }
+  if (btn) btn.textContent = 'Email Report';
 }
 
 if (window.EdenPrinter) EdenPrinter.onChange(refreshPrinterUI);
