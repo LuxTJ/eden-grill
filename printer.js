@@ -118,6 +118,7 @@
         });
         if (lineBuf) b.line('  ' + lineBuf);
       }
+      if (it.note) { b.line('  -> ' + it.note); }
     });
     b.rule();
 

@@ -20,6 +20,7 @@
     .receipt hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
     .receipt .r-row { display: flex; justify-content: space-between; gap: 8px; }
     .receipt .r-opts { padding-left: 8px; font-size: 11px; }
+    .receipt .r-note { padding-left: 8px; font-size: 11px; font-style: italic; }
     .receipt .r-total { font-weight: 700; font-size: 14px; }
     .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
   }
@@ -233,6 +234,8 @@ function openModifier(key, idx) {
     }).join('');
   }
 
+  body.innerHTML += '<div class="mod-group"><div class="mod-group-label">Notes</div><textarea class="mod-notes" id="mod-notes" rows="2" placeholder="Any special instructions..."></textarea></div>';
+
   updateModTotal();
   document.getElementById('modifier-modal').classList.add('active');
 }
@@ -265,9 +268,11 @@ function addFromModifier() {
   var modal = document.getElementById('modifier-body');
   var radios = Array.from(modal.querySelectorAll('input[type="radio"]:checked')).map(function(r) { return r.value; });
   var checks = Array.from(modal.querySelectorAll('input[type="checkbox"]:checked')).map(function(c) { return c.value; });
+  var note = document.getElementById('mod-notes').value.trim();
   cart.push({
     name: modItem.name,
     options: radios.concat(checks),
+    note: note,
     unitTotal: modUnitTotal(),
     quantity: modQtyVal
   });
@@ -298,6 +303,7 @@ function openCart() {
           '<span class="cart-item-price">$' + (item.unitTotal * item.quantity).toFixed(2) + '</span>' +
         '</div>' +
         (item.options.length ? '<div class="cart-item-opts">' + item.options.join(', ') + '</div>' : '') +
+        (item.note ? '<div class="cart-item-note">' + item.note + '</div>' : '') +
         '<button class="cart-item-remove" onclick="removeFromCart(' + i + ')">Remove</button>' +
       '</div>';
     }).join('');
@@ -349,7 +355,7 @@ async function placeOrder() {
     id: 'ORD-' + Date.now().toString().slice(-6),
     location: 'okc',
     customer: { name: name },
-    items: cart.map(function(i) { return { name: i.name, options: i.options, quantity: i.quantity, total: i.unitTotal * i.quantity }; }),
+    items: cart.map(function(i) { return { name: i.name, options: i.options, note: i.note || '', quantity: i.quantity, total: i.unitTotal * i.quantity }; }),
     subtotal: subtotal, discount: discount, promoCode: appliedPromo ? appliedPromo.code : null,
     total: total, payment: 'cash', paid: true,
     timestamp: new Date().toISOString()
@@ -387,7 +393,8 @@ function receiptHtml(order, copyLabel) {
   var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
   var itemsHtml = order.items.map(function(i) {
     return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
-      (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '');
+      (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '') +
+      (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
   }).join('');
   var sub = order.subtotal != null ? order.subtotal : order.total;
   return '<div class="receipt">' +

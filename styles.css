@@ -177,6 +177,8 @@ body { display: flex; flex-direction: column; height: 100dvh; }
   -webkit-overflow-scrolling: touch;
 }
 .mod-group { margin-bottom: 0.85rem; }
+.mod-notes { width: 100%; background: var(--bg); color: var(--text); border: 1px solid #333; border-radius: 6px; padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical; }
+.mod-notes:focus { outline: none; border-color: var(--accent); }
 .mod-group-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -245,6 +247,7 @@ body { display: flex; flex-direction: column; height: 100dvh; }
 .cart-item-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
 .cart-item-price { font-weight: 700; color: var(--accent-light); font-size: 0.85rem; }
 .cart-item-opts { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem; padding-left: 0.3rem; }
+.cart-item-note { font-size: 0.8rem; color: var(--accent-light); font-style: italic; margin-top: 0.2rem; padding-left: 0.3rem; }
 .cart-item-remove {
   background: none; border: none; color: var(--red); font-size: 0.7rem;
   cursor: pointer; padding: 0.15rem 0; margin-top: 0.15rem;
