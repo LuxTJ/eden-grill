@@ -124,7 +124,7 @@
         {
           "label": "Pick Your Cheese",
           "type": "radio",
-          "options": ["American", "Provolone", "Shredded Cheese"]
+          "options": ["No cheese", "American", "Provolone", "Shredded Cheese"]
         },
         {
           "label": "Add On's",
@@ -154,7 +154,7 @@
         {
           "label": "Pick Your Cheese",
           "type": "radio",
-          "options": ["No cheese", "American", "Provolone"]
+          "options": ["No cheese", "American", "Provolone", "Shredded Cheese"]
         },
         {
           "label": "Pick Toppings",
@@ -356,7 +356,7 @@
         {
           "label": "Pick Your Sauce",
           "type": "radio",
-          "options": ["Ranch", "Marinara"]
+          "options": ["Ranch", "Marinara", "No Sauce"]
         }
       ]
     },
@@ -466,7 +466,7 @@
         {
           "label": "Cheese Choice",
           "type": "radio",
-          "options": ["American", "Provolone"]
+          "options": ["No cheese", "American", "Provolone", "Shredded Cheese"]
         },
         {
           "label": "Toppings",
@@ -605,7 +605,7 @@
         {
           "label": "Cheese Choice",
           "type": "radio",
-          "options": ["American", "Provolone"]
+          "options": ["No cheese", "American", "Provolone", "Shredded Cheese"]
         },
         {
           "label": "Toppings",
@@ -740,7 +740,7 @@
         {
           "label": "Pick Your Cheese",
           "type": "radio",
-          "options": ["American", "Provolone", "Shredded Cheese"]
+          "options": ["No cheese", "American", "Provolone", "Shredded Cheese"]
         },
         {
           "label": "Add On's",
