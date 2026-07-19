@@ -149,7 +149,7 @@
         {
           "label": "Meat Options",
           "type": "radio",
-          "options": ["Ham", "Turkey", "No Ham", "No Turkey"]
+          "options": ["No Ham", "No Turkey"]
         },
         {
           "label": "Pick Your Cheese",
@@ -270,7 +270,7 @@
         {
           "label": "Pick Toppings",
           "type": "checkbox",
-          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos"]
+          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers"]
         },
         {
           "label": "Pick Sauce",
@@ -425,6 +425,11 @@
           "options": ["Crinkle Fries", "Tots"]
         },
         {
+          "label": "Fries Add On's",
+          "type": "checkbox",
+          "options": ["Ketchup"]
+        },
+        {
           "label": "Drink Choice",
           "type": "radio",
           "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
@@ -432,7 +437,7 @@
         {
           "label": "Wing Sauce",
           "type": "radio",
-          "options": ["Frank's Hot Buffalo", "Sweet Baby Ray's Honey BBQ", "Lemon Pepper", "Garlic Parm", "Ranch"]
+          "options": ["Plain", "Frank's Hot Buffalo", "Sweet Baby Ray's Honey BBQ", "Lemon Pepper", "Garlic Parm", "Ranch"]
         },
         {
           "label": "Dipping Sauce",
@@ -457,6 +462,11 @@
           "label": "Side Choice",
           "type": "radio",
           "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Fries Add On's",
+          "type": "checkbox",
+          "options": ["Ketchup"]
         },
         {
           "label": "Drink Choice",
@@ -499,6 +509,11 @@
           "options": ["Crinkle Fries", "Tots"]
         },
         {
+          "label": "Fries Add On's",
+          "type": "checkbox",
+          "options": ["Ketchup"]
+        },
+        {
           "label": "Drink Choice",
           "type": "radio",
           "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
@@ -534,6 +549,11 @@
           "label": "Side Choice",
           "type": "radio",
           "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Fries Add On's",
+          "type": "checkbox",
+          "options": ["Ketchup"]
         },
         {
           "label": "Drink Choice",
@@ -598,27 +618,66 @@
       "price": 30,
       "optionGroups": [
         {
-          "label": "Drink Choice",
+          "label": "Side Choice",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Fries Add On's",
+          "type": "checkbox",
+          "options": ["Ketchup"]
+        },
+        {
+          "label": "Drink 1",
           "type": "radio",
           "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         },
         {
-          "label": "Cheese Choice",
+          "label": "Drink 2",
+          "type": "radio",
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
+        },
+        {
+          "label": "Cheese Choice 1",
           "type": "radio",
           "options": ["No cheese", "American", "Provolone", "Shredded Cheese"]
         },
         {
-          "label": "Toppings",
+          "label": "Cheese Choice 2",
+          "type": "radio",
+          "options": ["No cheese", "American", "Provolone", "Shredded Cheese"]
+        },
+        {
+          "label": "Toppings 1",
           "type": "checkbox",
           "options": ["No Toppings", "Lettuce", "Tomato", "Pickle", "Raw Onions", "Grilled Onions", "Grilled Mushrooms", "Jalapenos"]
         },
         {
-          "label": "Pick Your Sauce",
+          "label": "Toppings 2",
+          "type": "checkbox",
+          "options": ["No Toppings", "Lettuce", "Tomato", "Pickle", "Raw Onions", "Grilled Onions", "Grilled Mushrooms", "Jalapenos"]
+        },
+        {
+          "label": "Sauce 1",
           "type": "checkbox",
           "options": ["Mustard", "Mayonnaise", "Ketchup", "BBQ", "A1", "NO Sauce"]
         },
         {
-          "label": "Add On's",
+          "label": "Sauce 2",
+          "type": "checkbox",
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "BBQ", "A1", "NO Sauce"]
+        },
+        {
+          "label": "Add On's 1",
+          "type": "checkbox",
+          "options": [
+            { "name": "Bacon", "price": 2 },
+            { "name": "Fried Egg", "price": 1 },
+            { "name": "Extra Patty", "price": 4 }
+          ]
+        },
+        {
+          "label": "Add On's 2",
           "type": "checkbox",
           "options": [
             { "name": "Bacon", "price": 2 },
@@ -633,27 +692,68 @@
       "price": 20,
       "optionGroups": [
         {
-          "label": "Drink Choice",
+          "label": "Side Choice",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
+          "label": "Fries Add On's",
+          "type": "checkbox",
+          "options": ["Ketchup"]
+        },
+        {
+          "label": "Drink 1",
           "type": "radio",
           "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
         },
         {
-          "label": "Exclusions",
+          "label": "Drink 2",
+          "type": "radio",
+          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
+        },
+        {
+          "label": "Exclusions 1",
           "type": "checkbox",
           "options": ["No Potato", "No Cheese"]
         },
         {
-          "label": "Pick Toppings",
+          "label": "Exclusions 2",
+          "type": "checkbox",
+          "options": ["No Potato", "No Cheese"]
+        },
+        {
+          "label": "Toppings 1",
           "type": "checkbox",
           "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos"]
         },
         {
-          "label": "Pick Sauce",
+          "label": "Toppings 2",
+          "type": "checkbox",
+          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos"]
+        },
+        {
+          "label": "Sauce 1",
           "type": "checkbox",
           "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Ketchup", "Thousand Island", "No Sauce"]
         },
         {
-          "label": "Extra Add On's",
+          "label": "Sauce 2",
+          "type": "checkbox",
+          "options": ["Red Salsa", "Green Salsa", "Sour Cream", "Ranch", "Ketchup", "Thousand Island", "No Sauce"]
+        },
+        {
+          "label": "Add On's 1",
+          "type": "checkbox",
+          "options": [
+            { "name": "Bacon", "price": 2 },
+            { "name": "Sausage", "price": 2 },
+            { "name": "Ham", "price": 2 },
+            { "name": "Turkey", "price": 2 },
+            { "name": "Chicken", "price": 2 }
+          ]
+        },
+        {
+          "label": "Add On's 2",
           "type": "checkbox",
           "options": [
             { "name": "Bacon", "price": 2 },
@@ -713,7 +813,7 @@
         {
           "label": "Pick Toppings",
           "type": "checkbox",
-          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos"]
+          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers"]
         },
         {
           "label": "Pick Sauce",
