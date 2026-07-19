@@ -7,13 +7,15 @@ const REPORT_EMAIL = process.env.REPORT_EMAIL || '';
 async function kvCommand(command) {
   if (!KV_URL || !KV_TOKEN) throw new Error('KV not configured');
   const args = Array.prototype.slice.call(arguments, 1);
+  const body = JSON.stringify([command].concat(args));
   const res = await fetch(KV_URL, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + KV_TOKEN, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ command: command, args: args }),
+    body: body,
   });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
+  const text = await res.text();
+  if (!res.ok) throw new Error('KV error: ' + (text || res.status));
+  const data = JSON.parse(text);
   return data.result;
 }
 
@@ -110,7 +112,7 @@ module.exports = async function handler(req, res) {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + RESEND_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Eden Grill Reports <onboarding@resend.dev>',
+        from: 'Eden Grill Reports <reports@littlethingsnow.com>',
         to: [REPORT_EMAIL],
         subject: report.subject,
         html: report.html,
