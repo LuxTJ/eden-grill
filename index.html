@@ -112,6 +112,7 @@
     <div class="confirm-check">✓</div>
     <h2>Order Placed!</h2>
     <p id="confirmation-text"></p>
+    <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy()">Print Kitchen Copy</button>
     <button class="pay-btn" onclick="closeConfirmation()">Done</button>
   </div>
 </div>
@@ -367,15 +368,17 @@ async function placeOrder() {
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
     try { await EdenPrinter.printOrder(order); printedVia = 'thermal'; }
-    catch (err) { console.error('Thermal print failed:', err); await printReceipts(order); }
+    catch (err) { console.error('Thermal print failed:', err); printCustomerCopy(order); pendingKitchenOrder = order; }
   } else {
-    await printReceipts(order);
+    printCustomerCopy(order);
+    pendingKitchenOrder = order;
   }
 
   closeCart();
-  var tail = printedVia === 'thermal' ? 'printing on thermal printer.' : 'opening print dialog.';
+  var tail = printedVia === 'thermal' ? 'printing on thermal printer.' : 'customer copy sent to print.';
   document.getElementById('confirmation-text').textContent =
     'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — ' + tail + ' Hand customer copy to guest, kitchen copy to cook.';
+  document.getElementById('btn-print-kitchen').style.display = pendingKitchenOrder ? '' : 'none';
   document.getElementById('order-confirmation').classList.add('active');
   cart = [];
   appliedPromo = null;
@@ -416,32 +419,26 @@ function receiptHtml(order, copyLabel) {
   '</div>';
 }
 
-// Print one copy as its own standalone print job. Mobile/desktop browsers and
-// most receipt-printer OS drivers handle a single-page job reliably, but are
-// unreliable at splitting one job into multiple pages via CSS page-break-before
-// (that's what caused only the first — customer — copy to ever come out).
-// So instead of one 2-page job, we run two separate window.print() jobs in
-// sequence, waiting for each print dialog to close before firing the next.
-function printOneCopy(order, copyLabel) {
-  return new Promise(function (resolve) {
-    document.getElementById('print-area').innerHTML = receiptHtml(order, copyLabel);
-    var resolved = false;
-    function done() {
-      if (resolved) return;
-      resolved = true;
-      window.removeEventListener('afterprint', done);
-      resolve();
-    }
-    window.addEventListener('afterprint', done);
-    window.print();
-    // Fallback: some mobile browsers don't reliably fire 'afterprint'.
-    setTimeout(done, 3000);
-  });
+// Two separate print jobs (customer, then kitchen) instead of one 2-page job —
+// most receipt-printer OS drivers and mobile browsers don't paginate a single
+// job reliably. Triggering the second job automatically (e.g. off a timer or
+// an 'afterprint' listener) fired window.print() while the first dialog was
+// still up, so the browser yanked it closed to open the new one — the dialog
+// would flash and vanish. Firing each print only from a direct button click
+// keeps every window.print() call tied to its own real user gesture.
+var pendingKitchenOrder = null;
+
+function printCustomerCopy(order) {
+  document.getElementById('print-area').innerHTML = receiptHtml(order, 'CUSTOMER COPY');
+  window.print();
 }
 
-async function printReceipts(order) {
-  await printOneCopy(order, 'CUSTOMER COPY');
-  await printOneCopy(order, 'KITCHEN COPY');
+function printKitchenCopy() {
+  if (!pendingKitchenOrder) return;
+  document.getElementById('print-area').innerHTML = receiptHtml(pendingKitchenOrder, 'KITCHEN COPY');
+  window.print();
+  pendingKitchenOrder = null;
+  document.getElementById('btn-print-kitchen').style.display = 'none';
 }
 
 function printerMsg(text, kind) {
