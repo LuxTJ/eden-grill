@@ -11,9 +11,9 @@
     html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
     body > *:not(#print-area) { display: none !important; }
     #print-area { display: block !important; }
-    .receipt { width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; background: #fff;
-      font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; page-break-after: always; }
-    .receipt:last-child { page-break-after: auto; }
+    .receipt { width: 76mm; margin: 0; padding: 4mm 2mm; color: #000; background: #fff;
+      font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; }
+    .receipt + .receipt { page-break-before: always; }
     .receipt .r-center { text-align: center; }
     .receipt .r-title { font-size: 16px; font-weight: 700; letter-spacing: 0.05em; }
     .receipt .r-copy { font-weight: 700; margin: 4px 0; }
