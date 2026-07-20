@@ -285,12 +285,33 @@ function updateModTotal() {
 
 function addFromModifier() {
   var modal = document.getElementById('modifier-body');
-  var radios = Array.from(modal.querySelectorAll('input[type="radio"]:checked')).map(function(r) { return r.value; });
-  var checks = Array.from(modal.querySelectorAll('input[type="checkbox"]:checked')).map(function(c) { return c.value; });
+  var groups = modItem.optionGroups || [];
+  var options = [];
+
+  // Radio option groups — use group label as prefix
+  groups.forEach(function(group, gi) {
+    if (group.type === 'radio') {
+      var checked = modal.querySelector('input[name="mod-g' + gi + '"]:checked');
+      if (checked) {
+        options.push(group.label + ': ' + checked.value);
+      }
+    }
+  });
+
+  // Checkbox option groups — use group label as prefix
+  groups.forEach(function(group, gi) {
+    if (group.type === 'checkbox') {
+      var checked = Array.from(modal.querySelectorAll('input[name^="mod-g' + gi + '"]:checked'));
+      checked.forEach(function(cb) {
+        options.push(group.label + ': ' + cb.value);
+      });
+    }
+  });
+
   var note = document.getElementById('mod-notes').value.trim();
   cart.push({
     name: modItem.name,
-    options: radios.concat(checks),
+    options: options,
     note: note,
     unitTotal: modUnitTotal(),
     quantity: modQtyVal
@@ -548,8 +569,13 @@ function renderReports() {
   var sorted = Object.keys(itemMap).sort(function(a, b) { return itemMap[b] - itemMap[a]; });
 
   var html = '';
-  html += '<div class="report-summary"><div class="report-stat"><span class="report-stat-val">' + all.length + '</span><span class="report-stat-label">Total Orders</span></div>';
-  html += '<div class="report-stat"><span class="report-stat-val">' + todayOrders.length + '</span><span class="report-stat-label">Today Orders</span></div></div>';
+  var totalRevenue = all.reduce(function(s, o) { return s + (o.total || 0); }, 0);
+  var todayRevenue = todayOrders.reduce(function(s, o) { return s + (o.total || 0); }, 0);
+  html += '<div class="report-summary">' +
+    '<div class="report-stat"><span class="report-stat-val">' + all.length + '</span><span class="report-stat-label">Total Orders</span></div>' +
+    '<div class="report-stat"><span class="report-stat-val">$' + totalRevenue.toFixed(2) + '</span><span class="report-stat-label">Total Revenue</span></div>' +
+    '<div class="report-stat"><span class="report-stat-val">' + todayOrders.length + '</span><span class="report-stat-label">Today Orders</span></div>' +
+    '<div class="report-stat"><span class="report-stat-val">$' + todayRevenue.toFixed(2) + '</span><span class="report-stat-label">Today Revenue</span></div></div>';
 
   html += '<div class="report-section"><h3>Items Sold (All Time)</h3>';
   html += '<table class="report-table"><tr><th>Item</th><th>Qty</th></tr>';

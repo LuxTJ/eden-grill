@@ -283,8 +283,6 @@
           "options": [
             { "name": "Bacon", "price": 2 },
             { "name": "Sausage", "price": 2 },
-            { "name": "Ham", "price": 2 },
-            { "name": "Turkey", "price": 2 },
             { "name": "Chicken", "price": 2 }
           ]
         }
@@ -623,6 +621,11 @@
           "options": ["Crinkle Fries", "Tots"]
         },
         {
+          "label": "Side Choice 2",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
           "label": "Fries Add On's",
           "type": "checkbox",
           "options": ["Ketchup"]
@@ -697,6 +700,11 @@
           "options": ["Crinkle Fries", "Tots"]
         },
         {
+          "label": "Side Choice 2",
+          "type": "radio",
+          "options": ["Crinkle Fries", "Tots"]
+        },
+        {
           "label": "Fries Add On's",
           "type": "checkbox",
           "options": ["Ketchup"]
@@ -747,8 +755,6 @@
           "options": [
             { "name": "Bacon", "price": 2 },
             { "name": "Sausage", "price": 2 },
-            { "name": "Ham", "price": 2 },
-            { "name": "Turkey", "price": 2 },
             { "name": "Chicken", "price": 2 }
           ]
         },
@@ -758,8 +764,6 @@
           "options": [
             { "name": "Bacon", "price": 2 },
             { "name": "Sausage", "price": 2 },
-            { "name": "Ham", "price": 2 },
-            { "name": "Turkey", "price": 2 },
             { "name": "Chicken", "price": 2 }
           ]
         }
@@ -826,8 +830,6 @@
           "options": [
             { "name": "Bacon", "price": 2 },
             { "name": "Sausage", "price": 2 },
-            { "name": "Ham", "price": 2 },
-            { "name": "Turkey", "price": 2 },
             { "name": "Chicken", "price": 2 }
           ]
         }
