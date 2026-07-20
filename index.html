@@ -404,21 +404,34 @@ async function placeOrder() {
   all.push(order);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 
-  var printedVia = 'browser';
+  // Try thermal printer first (prints both receipts), then fallback to browser print
+  var printedVia = 'none';
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
     try { await EdenPrinter.printOrder(order); printedVia = 'thermal'; }
-    catch (err) { console.error('Thermal print failed:', err); printCustomerCopy(order); pendingKitchenOrder = order; }
-  } else {
+    catch (err) { console.error('Thermal print failed:', err); printedVia = 'thermalFailed'; }
+  }
+  
+  // If thermal printer fails or not available, use browser print
+  if (printedVia === 'none' || printedVia === 'thermalFailed') {
     printCustomerCopy(order);
-    pendingKitchenOrder = order;
+    printKitchenCopy(order);
+    printedVia = 'browser';
   }
 
   closeCart();
-  var tail = printedVia === 'thermal' ? 'both receipts printing on thermal printer.' : 'customer copy sent to print.';
+  var tail = printedVia === 'thermal' ? 'both receipts printing on thermal printer.':
+             printedVia === 'thermalFailed' ? 'kitchen copy sent to print (thermal printer failed)':
+             'customer and kitchen copies sent to print (browser).';
   document.getElementById('confirmation-text').textContent =
     'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — ' + tail + ' Hand customer copy to guest, kitchen copy to cook.';
-  document.getElementById('btn-print-kitchen').style.display = pendingKitchenOrder ? '' : 'none';
+  document.getElementById('btn-print-kitchen').style.display = 'none';
+  pendingKitchenOrder = null;
+
+  // If both print methods failed, show a message
+  if (printedVia === 'browser' && (typeof window.EdenPrinter === 'undefined' || !window.EdenPrinter.status().connected)) {
+    document.getElementById('confirmation-text').textContent = 'Order placed but both thermal and browser printing failed. Check printer connectivity.';
+  }
   document.getElementById('order-confirmation').classList.add('active');
   cart = [];
   appliedPromo = null;
@@ -437,7 +450,25 @@ function closeConfirmation() { document.getElementById('order-confirmation').cla
 function receiptHtml(order, copyLabel) {
   var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
   var itemsHtml = order.items.map(function(i) {
-    return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
+    // Detect combo items (items specifically designed for 2 people)
+    var isTwoPersonCombo = i.name.includes('2 ');
+    
+    var displayQty = i.quantity !== null && i.quantity !== undefined ? i.quantity : 1;
+    var displayText = displayQty + 'x ' + i.name;
+    
+    if (isTwoPersonCombo) {
+      // For two-person combos, show "For 2" or "(2 people)" indicator
+      if (i.name.includes('Combo')) {
+        displayText = displayQty + 'x ' + i.name + ' (FOR 2)' + (displayQty > 1 ? ' x' + displayQty : '');
+      } else {
+        displayText = displayQty + 'x ' + i.name + ' (FOR 2)' + (displayQty > 1 ? ' x' + displayQty : '');
+      }
+    } else if (displayQty > 1) {
+      // For regular items, show quantity as before
+      displayText = displayQty + 'x ' + i.name;
+    }
+    
+    return '<div class="r-row"><span>' + displayText + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
       (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '') +
       (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
   }).join('');
@@ -476,12 +507,9 @@ function printCustomerCopy(order) {
   window.print();
 }
 
-function printKitchenCopy() {
-  if (!pendingKitchenOrder) return;
-  document.getElementById('print-area').innerHTML = receiptHtml(pendingKitchenOrder, 'KITCHEN COPY');
+function printKitchenCopy(order) {
+  document.getElementById('print-area').innerHTML = receiptHtml(order, 'KITCHEN COPY');
   window.print();
-  pendingKitchenOrder = null;
-  document.getElementById('btn-print-kitchen').style.display = 'none';
 }
 
 function printerMsg(text, kind) {

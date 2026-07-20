@@ -246,6 +246,16 @@
     await conn.send(combined);
   }
 
+  async function printCustomerReceipt(bytes) {
+    if (!conn) return;
+    await conn.send(bytes);
+  }
+
+  async function printKitchenTicket(bytes) {
+    if (!conn) return;
+    await conn.send(bytes);
+  }
+
   // ----- browser print fallback templates -----
   function customerReceiptHtml(order) {
     var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
