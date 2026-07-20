@@ -28,6 +28,7 @@
     .receipt .r-note { padding-left: 8px; font-size: 11px; font-style: italic; }
     .receipt .r-total { font-weight: 700; font-size: 14px; }
     .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
+    .receipt + .receipt { page-break-before: always; }
   }
 </style>
 </head>
@@ -436,13 +437,11 @@ async function placeOrder() {
     try { await EdenPrinter.printOrder(order); }
     catch(err) { console.error('Thermal printer failed:', err); }
   } else {
-    // Browser print fallback for both receipts (customer then kitchen)
-    document.getElementById('print-area').innerHTML = receiptHtml(order, 'CUSTOMER COPY');
+    // Single print job — both receipts in one window.print() call
+    // Two separate calls caused the print dialog to flash and vanish on mobile
+    document.getElementById('print-area').innerHTML =
+      receiptHtml(order, 'CUSTOMER COPY') + receiptHtml(order, 'KITCHEN COPY');
     window.print();
-    setTimeout(function() {
-      document.getElementById('print-area').innerHTML = receiptHtml(order, 'KITCHEN COPY');
-      window.print();
-    }, 1000);
   }
   
   console.log('Order placed and receipts printing.');
@@ -545,7 +544,7 @@ async function connectPrinter(kind) {
   var isNative = window.EdenPrinter && EdenPrinter.isNativePlatform();
 
   if (kind === 'usb' && !isNative && !('usb' in navigator)) {
-    printerMsg('USB not available in this browser. Use Chrome or Edge (desktop) for USB printer support.', 'err');
+    printerMsg('USB not available on this device. Try Chrome or Edge on a desktop computer for USB, or use AirPrint below.', 'err');
     return;
   }
   if (kind === 'usb' && isNative) {
@@ -553,7 +552,8 @@ async function connectPrinter(kind) {
     return;
   }
   if (kind === 'bluetooth' && !isNative && !('bluetooth' in navigator)) {
-    printerMsg('Bluetooth not supported on this browser. Use the Eden Grill native app (Android/iOS) for Bluetooth printing, or print via the browser dialog as a fallback.', 'err');
+    // iOS/Safari — no Web Bluetooth, but AirPrint works with many thermal printers
+    printerMsg('Web Bluetooth is not available in this browser. If your printer supports AirPrint (most Epson/Star thermal printers do), you can print directly from this device — just place an order and it will appear in the AirPrint dialog.', 'err');
     return;
   }
 
