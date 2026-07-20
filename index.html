@@ -121,6 +121,7 @@
     <div class="confirm-check">✓</div>
     <h2>Order Placed!</h2>
     <p id="confirmation-text"></p>
+    <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy(pendingKitchenOrder)">Print Customer Copy</button>
     <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy(pendingKitchenOrder)">Print Kitchen Copy</button>
     <button class="pay-btn" onclick="closeConfirmation()">Done</button>
   </div>
@@ -430,19 +431,18 @@ async function placeOrder() {
   // Sync to KV (fire-and-forget — doesn't block checkout)
   fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
   
-  // Try thermal printer first (prints both receipts), then fallback to browser print
+  // Try thermal printer first (prints both receipts), then show print buttons
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
     try { await EdenPrinter.printOrder(order); }
     catch(err) { console.error('Thermal printer failed:', err); }
-  } else {
-    // Customer receipt prints immediately (user taps Print)
-    document.getElementById('print-area').innerHTML = receiptHtml(order, 'CUSTOMER COPY');
-    window.print();
-    // Kitchen copy button appears for a second tap
-    document.getElementById('btn-print-kitchen').style.display = '';
-    pendingKitchenOrder = order;
   }
+  // Show both print buttons on confirmation screen
+  pendingKitchenOrder = order;
+  document.getElementById('btn-print-customer').style.display = '';
+  document.getElementById('btn-print-kitchen').style.display = '';
+  document.getElementById('confirmation-text').textContent =
+    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap each button below to print. Hand customer copy to guest, kitchen copy to cook.';
   
   console.log('Order placed and receipts printing.');
 }
@@ -505,8 +505,11 @@ function receiptHtml(order, copyLabel) {
 var pendingKitchenOrder = null;
 
 function printCustomerCopy(order) {
+  if (!order) order = pendingKitchenOrder;
+  if (!order) return;
   document.getElementById('print-area').innerHTML = receiptHtml(order, 'CUSTOMER COPY');
   window.print();
+  document.getElementById('btn-print-customer').style.display = 'none';
 }
 
 function printKitchenCopy(order) {
@@ -515,6 +518,10 @@ function printKitchenCopy(order) {
   document.getElementById('print-area').innerHTML = receiptHtml(order, 'KITCHEN COPY');
   window.print();
   document.getElementById('btn-print-kitchen').style.display = 'none';
+}
+
+function closeConfirmation() {
+  document.getElementById('order-confirmation').classList.remove('active');
   pendingKitchenOrder = null;
 }
 
