@@ -4,7 +4,7 @@
   "private": true,
   "description": "Eden Grill POS - Thermal Receipt Printer with Cross-Platform Bluetooth",
   "scripts": {
-    "build:www": "node -e \"var fs=require('fs'),p='www';try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}fs.mkdirSync(p);['index.html','capacitor-bridge.js','printer.js','styles.css','menu.json','logo.png'].forEach(f=>fs.copyFileSync(f,p+'/'+f));if(fs.existsSync('images')){fs.cpSync('images',p+'/images',{recursive:true})}\"",
+    "build:www": "node -e \"var fs=require('fs'),p='www';try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}fs.mkdirSync(p);['index.html','capacitor-bridge.js','printer.js','styles.css','menu.json','logo.png','manifest.json','sw.js'].forEach(f=>fs.copyFileSync(f,p+'/'+f));if(fs.existsSync('images')){fs.cpSync('images',p+'/images',{recursive:true})}\"",
     "cap:sync": "npm run build:www && npx cap sync",
     "cap:open:android": "npm run build:www && npx cap sync && npx cap open android",
     "cap:open:ios": "npm run build:www && npx cap sync && npx cap open ios",
