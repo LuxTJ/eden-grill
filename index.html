@@ -404,35 +404,14 @@ async function placeOrder() {
   all.push(order);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 
-  // Try thermal printer first (prints both receipts), then fallback to browser print
-  var printedVia = 'none';
-  var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
-  if (printerReady) {
-    try { await EdenPrinter.printOrder(order); printedVia = 'thermal'; }
-    catch (err) { console.error('Thermal print failed:', err); printedVia = 'thermalFailed'; }
-  }
-  
-  // If thermal printer fails or not available, use browser print
-  if (printedVia === 'none' || printedVia === 'thermalFailed') {
-    printCustomerCopy(order);
-    printKitchenCopy(order);
-    printedVia = 'browser';
-  }
-
+  // Save order immediately, then show confirmation and try printing
   closeCart();
-  var tail = printedVia === 'thermal' ? 'both receipts printing on thermal printer.':
-             printedVia === 'thermalFailed' ? 'kitchen copy sent to print (thermal printer failed)':
-             'customer and kitchen copies sent to print (browser).';
+  document.getElementById('order-confirmation').classList.add('active');
   document.getElementById('confirmation-text').textContent =
-    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — ' + tail + ' Hand customer copy to guest, kitchen copy to cook.';
+    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Order placed! Printing receipts... Hand customer copy to guest, kitchen copy to cook.';
   document.getElementById('btn-print-kitchen').style.display = 'none';
   pendingKitchenOrder = null;
-
-  // If both print methods failed, show a message
-  if (printedVia === 'browser' && (typeof window.EdenPrinter === 'undefined' || !window.EdenPrinter.status().connected)) {
-    document.getElementById('confirmation-text').textContent = 'Order placed but both thermal and browser printing failed. Check printer connectivity.';
-  }
-  document.getElementById('order-confirmation').classList.add('active');
+  
   cart = [];
   appliedPromo = null;
   document.getElementById('promo-input').value = '';
@@ -440,9 +419,26 @@ async function placeOrder() {
   document.getElementById('promo-msg').className = 'promo-msg';
   document.getElementById('customer-name').value = '';
   updateOrderBar();
-
+  
   // Sync to KV (fire-and-forget — doesn't block checkout)
   fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
+  
+  // Try thermal printer first (prints both receipts), then fallback to browser print
+  var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
+  if (printerReady) {
+    try { await EdenPrinter.printOrder(order); }
+    catch(err) { console.error('Thermal printer failed:', err); }
+  } else {
+    // Browser print fallback for both receipts (customer then kitchen)
+    document.getElementById('print-area').innerHTML = receiptHtml(order, 'CUSTOMER COPY');
+    window.print();
+    setTimeout(function() {
+      document.getElementById('print-area').innerHTML = receiptHtml(order, 'KITCHEN COPY');
+      window.print();
+    }, 1000);
+  }
+  
+  console.log('Order placed and receipts printing.');
 }
 
 function closeConfirmation() { document.getElementById('order-confirmation').classList.remove('active'); }
@@ -520,7 +516,6 @@ function printerMsg(text, kind) {
 
 function refreshPrinterUI() {
   var st = window.EdenPrinter ? EdenPrinter.status() : { connected: false };
-  var sup = window.EdenPrinter ? EdenPrinter.isSupported() : { usb: false, bluetooth: false };
   document.getElementById('printer-status-dot').classList.toggle('on', st.connected);
   var stext = document.getElementById('printer-status-text');
   if (stext) stext.textContent = st.connected ? 'Connected: ' + st.name + ' (' + (st.kind === 'usb' ? 'USB' : 'BT') + ')' : 'Not connected';
@@ -528,23 +523,31 @@ function refreshPrinterUI() {
   var btnBt = document.getElementById('btn-bt');
   var btnTest = document.getElementById('btn-test');
   var btnDisc = document.getElementById('btn-disc');
-  if (btnUsb) { btnUsb.disabled = !sup.usb; btnUsb.textContent = sup.usb ? 'Connect USB Printer' : 'USB not supported'; }
-  if (btnBt) { btnBt.disabled = !sup.bluetooth; btnBt.textContent = sup.bluetooth ? 'Connect Bluetooth Printer' : 'BT not supported'; }
+  if (btnUsb) btnUsb.disabled = false;
+  if (btnBt) btnBt.disabled = false;
   if (btnTest) btnTest.disabled = !st.connected;
   if (btnDisc) btnDisc.disabled = !st.connected;
   var note = document.getElementById('printer-support-note');
-  if (note) note.textContent = (!sup.usb && !sup.bluetooth) ? 'No USB/BT support — receipts use browser print dialog.' : 'USB may need WinUSB driver (Zadig). Use Chrome for Bluetooth.';
+  if (note) note.textContent = st.connected ? 'Connected. Both receipts print automatically on thermal.' : 'USB or Bluetooth — both print customer + kitchen receipts.';
 }
 
 function openPrinter() { document.getElementById('printer-modal').classList.add('active'); printerMsg(''); refreshPrinterUI(); }
 function closePrinter() { document.getElementById('printer-modal').classList.remove('active'); }
 
 async function connectPrinter(kind) {
+  if (kind === 'usb' && !('usb' in navigator)) {
+    printerMsg('USB not available in this browser. Use Chrome or Edge for USB printer support.', 'err');
+    return;
+  }
+  if (kind === 'bluetooth' && !('bluetooth' in navigator)) {
+    printerMsg('Bluetooth not available in this browser. Use Chrome or Edge for Bluetooth printer support.', 'err');
+    return;
+  }
   printerMsg('Opening device picker…');
   try {
     if (kind === 'usb') await EdenPrinter.connectUSB();
     else await EdenPrinter.connectBluetooth();
-    printerMsg('Connected.', 'ok');
+    printerMsg('Connected! Both receipts will print automatically.', 'ok');
   } catch (err) {
     if (err && (err.name === 'NotFoundError' || /cancel/i.test(err.message || ''))) printerMsg('No printer selected.');
     else printerMsg(err && err.message ? err.message : 'Could not connect.', 'err');
