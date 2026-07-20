@@ -17,8 +17,8 @@
      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
      body > *:not(#print-area) { display: none !important; }
      #print-area { display: block !important; }
-+    .print-page { min-height: 100vh; page-break-after: always; break-after: page; }
-+    .print-page:last-child { min-height: 0; page-break-after: auto; break-after: auto; }
++    .print-page { height: 100vh; overflow: hidden; page-break-after: always; break-after: page; }
++    .print-page:last-child { height: auto; overflow: visible; page-break-after: auto; break-after: auto; }
      .receipt { width: 76mm; margin: 0; padding: 4mm 2mm; color: #000; background: #fff;
        font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; }
      .receipt .r-center { text-align: center; }
