@@ -165,6 +165,7 @@
 
 <div id="print-area"></div>
 
+<script src="capacitor-bridge.js"></script>
 <script src="printer.js"></script>
 <script>
 const STORAGE_KEY = 'edenGrillOrders';
@@ -535,15 +536,22 @@ function openPrinter() { document.getElementById('printer-modal').classList.add(
 function closePrinter() { document.getElementById('printer-modal').classList.remove('active'); }
 
 async function connectPrinter(kind) {
-  if (kind === 'usb' && !('usb' in navigator)) {
-    printerMsg('USB not available in this browser. Use Chrome or Edge for USB printer support.', 'err');
+  var isNative = window.EdenPrinter && EdenPrinter.isNativePlatform();
+
+  if (kind === 'usb' && !isNative && !('usb' in navigator)) {
+    printerMsg('USB not available in this browser. Use Chrome or Edge (desktop) for USB printer support.', 'err');
     return;
   }
-  if (kind === 'bluetooth' && !('bluetooth' in navigator)) {
-    printerMsg('Bluetooth not available in this browser. Use Chrome or Edge for Bluetooth printer support.', 'err');
+  if (kind === 'usb' && isNative) {
+    printerMsg('USB printing is not available on mobile. Use Bluetooth instead.', 'err');
     return;
   }
-  printerMsg('Opening device picker…');
+  if (kind === 'bluetooth' && !isNative && !('bluetooth' in navigator)) {
+    printerMsg('Bluetooth not supported on this browser. Use the Eden Grill native app (Android/iOS) for Bluetooth printing, or print via the browser dialog as a fallback.', 'err');
+    return;
+  }
+
+  printerMsg(kind === 'usb' ? 'Opening USB device picker…' : 'Scanning for nearby Bluetooth printers…');
   try {
     if (kind === 'usb') await EdenPrinter.connectUSB();
     else await EdenPrinter.connectBluetooth();

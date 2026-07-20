@@ -1,0 +1,21 @@
+{
+  "name": "eden-grill",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Eden Grill POS - Thermal Receipt Printer with Cross-Platform Bluetooth",
+  "scripts": {
+    "build:www": "node -e \"var fs=require('fs'),p='www';try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}fs.mkdirSync(p);['index.html','capacitor-bridge.js','printer.js','styles.css','menu.json','logo.png'].forEach(f=>fs.copyFileSync(f,p+'/'+f));if(fs.existsSync('images')){fs.cpSync('images',p+'/images',{recursive:true})}\"",
+    "cap:sync": "npm run build:www && npx cap sync",
+    "cap:open:android": "npm run build:www && npx cap sync && npx cap open android",
+    "cap:open:ios": "npm run build:www && npx cap sync && npx cap open ios",
+    "cap:copy": "npm run build:www && npx cap copy"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}

@@ -137,11 +137,16 @@
     return b.toBytes();
   }
 
+  // ----- native/capacitor bridge detection -----
+  var bridge = window.EdenBridge;
+  var isNative = bridge && bridge.isNative;
+
   // ----- connection state (single printer, two jobs) -----
   let conn = null;
   const listeners = [];
 
   function status() {
+    if (!conn && isNative) return bridge.status();
     return { connected: !!conn, kind: conn ? conn.kind : null, name: conn ? conn.name : null };
   }
   function notify() { listeners.forEach(function (fn) { try { fn(status()); } catch (e) {} }); }
@@ -149,7 +154,10 @@
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
   // ----- connection helpers (reused for both targets) -----
-  function isSup() { return { usb: 'usb' in navigator, bluetooth: 'bluetooth' in navigator }; }
+  function isSup() {
+    if (isNative) return { usb: false, bluetooth: true };
+    return { usb: 'usb' in navigator, bluetooth: 'bluetooth' in navigator };
+  }
 
   async function connectUSB() {
     if (!('usb' in navigator)) throw new Error('WebUSB not supported.');
@@ -191,7 +199,18 @@
     '00001800', '00001801',
   ];
 
-  async function connectBluetooth() {
+  async function connectBluetooth(address) {
+    // Native mode: use Capacitor bridge
+    if (isNative) {
+      await bridge.connectBluetooth(address || '');
+      return {
+        kind: 'bluetooth',
+        name: bridge.status().name || 'Thermal Printer',
+        send: async function (bytes) { await bridge.send(bytes); },
+        close: async function () { await bridge.disconnect(); },
+      };
+    }
+    // Browser mode: use Web Bluetooth API
     if (!('bluetooth' in navigator)) throw new Error('Web Bluetooth not supported.');
     const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: BT_SERVICES });
     const server = await device.gatt.connect();
@@ -294,11 +313,20 @@
       '<div class="r-foot">Fire when ready!</div></div>';
   }
 
+  // In native mode, scan for BT printers and connect to first found
+  async function connectBluetoothNative() {
+    if (!isNative) throw new Error('Not in native mode.');
+    var devices = await bridge.scanPrinters();
+    if (!devices || devices.length === 0) throw new Error('No Bluetooth printers found nearby. Make sure the printer is on and in pairing mode.');
+    // Connect to first printer
+    return connectBluetooth(devices[0].address);
+  }
+
   window.EdenPrinter = {
     isSupported: isSup,
     status: status,
     connectUSB: function () { return connectPrinter('usb'); },
-    connectBluetooth: function () { return connectPrinter('bluetooth'); },
+    connectBluetooth: function () { return isNative ? connectBluetoothNative() : connectPrinter('bluetooth'); },
     disconnect: disconnectPrinter,
     printOrder: printOrder,
     customerReceiptHtml: customerReceiptHtml,
@@ -306,5 +334,7 @@
     onChange: function (fn) { listeners.push(fn); },
     getCols: cols,
     setCols: function (n) { setCols(n); notify(); },
+    getBridge: function () { return bridge; },
+    isNativePlatform: function () { return isNative; },
   };
 })();

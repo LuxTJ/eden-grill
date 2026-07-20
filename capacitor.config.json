@@ -1,0 +1,20 @@
+{
+  "appId": "com.edengrill.pos",
+  "appName": "Eden Grill",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": []
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": null,
+      "keystoreAlias": null
+    }
+  },
+  "ios": {
+    "contentInset": "always",
+    "allowsLinkPreview": false
+  }
+}
