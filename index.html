@@ -29,6 +29,7 @@
     .receipt .r-total { font-weight: 700; font-size: 14px; }
     .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
     .receipt + .receipt { page-break-before: always; }
+    .print-page-label { font-family: 'Courier New', monospace; font-size: 11px; color: #666; padding: 2mm 2mm 0; }
   }
 </style>
 </head>
@@ -440,7 +441,10 @@ async function placeOrder() {
     // Single print job — both receipts in one window.print() call
     // Two separate calls caused the print dialog to flash and vanish on mobile
     document.getElementById('print-area').innerHTML =
-      receiptHtml(order, 'CUSTOMER COPY') + receiptHtml(order, 'KITCHEN COPY');
+      '<div class="print-page-label">Page 1 of 2 — Customer Copy</div>' +
+      receiptHtml(order, 'CUSTOMER COPY') +
+      '<div class="print-page-label">Page 2 of 2 — Kitchen Copy</div>' +
+      receiptHtml(order, 'KITCHEN COPY');
     window.print();
   }
   
