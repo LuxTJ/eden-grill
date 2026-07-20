@@ -12,25 +12,27 @@
 <title>Eden Grill POS</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  #print-area { display: none; }
-  @media print {
-    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
-    body > *:not(#print-area) { display: none !important; }
-    #print-area { display: block !important; }
-    .receipt { width: 76mm; margin: 0; padding: 4mm 2mm; color: #000; background: #fff;
-      font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; }
-    .receipt .r-center { text-align: center; }
-    .receipt .r-title { font-size: 16px; font-weight: 700; letter-spacing: 0.05em; }
-    .receipt .r-copy { font-weight: 700; margin: 4px 0; }
-    .receipt hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
-    .receipt .r-row { display: flex; justify-content: space-between; gap: 8px; }
-    .receipt .r-opts { padding-left: 8px; font-size: 11px; }
-    .receipt .r-note { padding-left: 8px; font-size: 11px; font-style: italic; }
-    .receipt .r-total { font-weight: 700; font-size: 14px; }
-    .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
-    .receipt + .receipt { page-break-before: always; }
-    .print-page-label { font-family: 'Courier New', monospace; font-size: 11px; color: #666; padding: 2mm 2mm 0; }
-  }
+   #print-area { display: none; }
+   @media print {
+     html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+     body > *:not(#print-area) { display: none !important; }
+     #print-area { display: block !important; }
+     .receipt { width: 76mm; margin: 0; padding: 4mm 2mm; color: #000; background: #fff;
+       font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; }
+     .receipt .r-center { text-align: center; }
+     .receipt .r-title { font-size: 16px; font-weight: 700; letter-spacing: 0.05em; }
+     .receipt .r-copy { font-weight: 700; margin: 4px 0; }
+     .receipt hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+     .receipt .r-row { display: flex; justify-content: space-between; gap: 8px; }
+     .receipt .r-opts { padding-left: 8px; font-size: 11px; }
+     .receipt .r-note { padding-left: 8px; font-size: 11px; font-style: italic; }
+     .receipt .r-total { font-weight: 700; font-size: 14px; }
+     .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
+     .receipt + .receipt { page-break-before: always; }
+     .print-page-label { font-family: 'Courier New', monospace; font-size: 11px; color: #666; padding: 2mm 2mm 0; }
++    .print-page { page-break-after: always; break-after: page; }
++    .print-page:last-child { page-break-after: auto; break-after: auto; }
+   }
 </style>
 </head>
 <body>
@@ -441,10 +443,10 @@ async function placeOrder() {
     // Single print job — both receipts in one window.print() call
     // Two separate calls caused the print dialog to flash and vanish on mobile
     document.getElementById('print-area').innerHTML =
-      '<div class="print-page-label">Page 1 of 2 — Customer Copy</div>' +
-      receiptHtml(order, 'CUSTOMER COPY') +
-      '<div class="print-page-label">Page 2 of 2 — Kitchen Copy</div>' +
-      receiptHtml(order, 'KITCHEN COPY');
+      '<div class="print-page"><div class="print-page-label">Page 1 of 2 — Customer Copy</div>' +
+      receiptHtml(order, 'CUSTOMER COPY') + '</div>' +
+      '<div class="print-page"><div class="print-page-label">Page 2 of 2 — Kitchen Copy</div>' +
+      receiptHtml(order, 'KITCHEN COPY') + '</div>';
     window.print();
   }
   
