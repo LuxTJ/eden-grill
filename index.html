@@ -28,6 +28,7 @@
      .receipt .r-note { padding-left: 8px; font-size: 11px; font-style: italic; }
      .receipt .r-total { font-weight: 700; font-size: 14px; }
      .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
+     .receipt + .receipt { page-break-before: always; break-before: page; }
    }
 </style>
 </head>
@@ -121,8 +122,8 @@
     <div class="confirm-check">✓</div>
     <h2>Order Placed!</h2>
     <p id="confirmation-text"></p>
-    <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy(pendingKitchenOrder)">Print Customer Copy</button>
-    <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy(pendingKitchenOrder)">Print Kitchen Copy</button>
+    <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy(pendingKitchenOrder)">Reprint Customer Copy</button>
+    <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy(pendingKitchenOrder)">Reprint Kitchen Copy</button>
     <button class="pay-btn" onclick="closeConfirmation()">Done</button>
   </div>
 </div>
@@ -431,19 +432,23 @@ async function placeOrder() {
   // Sync to KV (fire-and-forget — doesn't block checkout)
   fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
   
-  // Try thermal printer first (prints both receipts), then show print buttons
+  // Try thermal printer first (prints both receipts as one job); otherwise
+  // send both receipts to the OS/AirPrint dialog as one job automatically.
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
     try { await EdenPrinter.printOrder(order); }
     catch(err) { console.error('Thermal printer failed:', err); }
+  } else {
+    try { printBothCopies(order); }
+    catch(err) { console.error('Print failed:', err); }
   }
-  // Show both print buttons on confirmation screen
+  // Reprint buttons stay available on the confirmation screen as a manual fallback
   pendingKitchenOrder = order;
   document.getElementById('btn-print-customer').style.display = '';
   document.getElementById('btn-print-kitchen').style.display = '';
   document.getElementById('confirmation-text').textContent =
-    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap each button below to print. Hand customer copy to guest, kitchen copy to cook.';
-  
+    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Both receipts sent to the printer. Use the buttons below only if you need to reprint one.';
+
   console.log('Order placed and receipts printing.');
 }
 
@@ -504,9 +509,20 @@ function receiptHtml(order, copyLabel) {
 // keeps every window.print() call tied to its own real user gesture.
 var pendingKitchenOrder = null;
 
+// Both receipts as one print job (one window.print() call, two pages via
+// CSS page-break) so the OS print dialog only needs to be confirmed once
+// and both copies come out back-to-back automatically.
+function printBothCopies(order) {
+  if (!order) return;
+  document.getElementById('print-area').innerHTML =
+    receiptHtml(order, 'CUSTOMER COPY') + receiptHtml(order, 'KITCHEN COPY');
+  window.print();
+}
+
 function printCustomerCopy(order) {
   if (!order) order = pendingKitchenOrder;
   if (!order) return;
+  document.getElementById('print-area').innerHTML = '';
   document.getElementById('print-area').innerHTML = receiptHtml(order, 'CUSTOMER COPY');
   window.print();
   document.getElementById('btn-print-customer').style.display = 'none';
@@ -515,6 +531,7 @@ function printCustomerCopy(order) {
 function printKitchenCopy(order) {
   if (!order) order = pendingKitchenOrder;
   if (!order) return;
+  document.getElementById('print-area').innerHTML = '';
   document.getElementById('print-area').innerHTML = receiptHtml(order, 'KITCHEN COPY');
   window.print();
   document.getElementById('btn-print-kitchen').style.display = 'none';

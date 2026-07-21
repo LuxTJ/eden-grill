@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eden Grill — Print Station</title>
+<style>
+  :root {
+    --bg: #0d0d0d; --bg-card: #1a1a1a; --accent: #008DD6; --accent-light: #45BEFC;
+    --text: #fff; --text-dim: rgba(255,255,255,0.55); --border: rgba(255,255,255,0.08);
+    --green: #28a745; --red: #dc3545; --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, Segoe UI, Roboto, sans-serif; padding: 2rem; }
+  h1 { font-size: 1.4rem; margin: 0 0 1.5rem; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; max-width: 560px; }
+  .row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+  .dot.on { background: var(--green); }
+  button { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 0.7rem 1.1rem; font-size: 0.95rem; cursor: pointer; margin-right: 0.5rem; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .msg { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.5rem; min-height: 1.2em; }
+  .msg.err { color: #ff8a8a; }
+  .msg.ok { color: var(--green); }
+  .stat { font-size: 0.8rem; color: var(--text-dim); }
+  .log { max-width: 560px; max-height: 320px; overflow-y: auto; font-size: 0.85rem; }
+  .log-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+  .log-row .fail { color: #ff8a8a; }
+  .log-row .ok { color: var(--green); }
+</style>
+</head>
+<body>
+
+<h1>Eden Grill — Print Station</h1>
+
+<div class="card">
+  <div class="row">
+    <span class="dot" id="printer-dot"></span>
+    <span id="printer-status">Printer not connected</span>
+  </div>
+  <button id="btn-connect" onclick="connectPrinter()">Connect Printer (USB)</button>
+  <div class="msg" id="printer-msg"></div>
+</div>
+
+<div class="card">
+  <div class="row">
+    <span class="dot" id="session-dot"></span>
+    <span id="session-status">Session not started</span>
+  </div>
+  <button id="btn-start" onclick="startSession()" disabled>Start Session</button>
+  <button id="btn-stop" class="secondary" onclick="stopSession()" disabled>Stop Session</button>
+  <div class="msg" id="session-msg"></div>
+  <div class="stat" id="poll-stat"></div>
+</div>
+
+<div class="card">
+  <div class="row"><strong>Activity</strong></div>
+  <div class="log" id="log"></div>
+</div>
+
+<script src="printer.js"></script>
+<script>
+'use strict';
+
+var SEEN_KEY = 'edenGrillStationSeen';
+var POLL_MS = 4000;
+var pollTimer = null;
+var polling = false;
+
+function seenSet() {
+  try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }
+  catch (e) { return new Set(); }
+}
+function saveSeen(set) { localStorage.setItem(SEEN_KEY, JSON.stringify(Array.from(set))); }
+
+function logRow(text, kind) {
+  var el = document.getElementById('log');
+  var row = document.createElement('div');
+  row.className = 'log-row';
+  var time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  row.innerHTML = '<span class="' + (kind || '') + '">' + text + '</span><span>' + time + '</span>';
+  el.insertBefore(row, el.firstChild);
+}
+
+function setMsg(id, text, kind) {
+  var el = document.getElementById(id);
+  el.textContent = text || '';
+  el.className = 'msg' + (kind ? ' ' + kind : '');
+}
+
+function refreshPrinterUI() {
+  var st = EdenPrinter.status();
+  document.getElementById('printer-dot').classList.toggle('on', st.connected);
+  document.getElementById('printer-status').textContent = st.connected
+    ? 'Connected: ' + st.name : 'Printer not connected';
+  document.getElementById('btn-start').disabled = !st.connected || polling;
+}
+
+async function connectPrinter() {
+  setMsg('printer-msg', 'Opening USB device picker…');
+  try {
+    await EdenPrinter.connectUSB();
+    setMsg('printer-msg', 'Connected.', 'ok');
+  } catch (err) {
+    setMsg('printer-msg', err && err.message ? err.message : 'Could not connect.', 'err');
+  }
+  refreshPrinterUI();
+}
+
+async function startSession() {
+  var st = EdenPrinter.status();
+  if (!st.connected) { setMsg('session-msg', 'Connect the printer first.', 'err'); return; }
+
+  setMsg('session-msg', 'Loading current orders to set a baseline…');
+  try {
+    var res = await fetch('/api/orders');
+    var orders = await res.json();
+    if (!Array.isArray(orders)) throw new Error('Unexpected response from /api/orders');
+    var seen = seenSet();
+    orders.forEach(function (o) { if (o && o.id) seen.add(o.id); });
+    saveSeen(seen);
+  } catch (err) {
+    setMsg('session-msg', 'Could not load orders: ' + (err && err.message ? err.message : err), 'err');
+    return;
+  }
+
+  polling = true;
+  document.getElementById('session-dot').classList.add('on');
+  document.getElementById('session-status').textContent = 'Session running';
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  setMsg('session-msg', 'Watching for new orders…', 'ok');
+  logRow('Session started — baseline set, ignoring existing orders', 'ok');
+
+  poll();
+  pollTimer = setInterval(poll, POLL_MS);
+}
+
+function stopSession() {
+  polling = false;
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = null;
+  document.getElementById('session-dot').classList.remove('on');
+  document.getElementById('session-status').textContent = 'Session stopped';
+  document.getElementById('btn-start').disabled = !EdenPrinter.status().connected;
+  document.getElementById('btn-stop').disabled = true;
+  setMsg('session-msg', '');
+  logRow('Session stopped');
+}
+
+async function poll() {
+  if (!polling) return;
+  var stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  try {
+    var res = await fetch('/api/orders');
+    var orders = await res.json();
+    if (!Array.isArray(orders)) throw new Error('Unexpected response');
+    document.getElementById('poll-stat').textContent = 'Last poll: ' + stamp + ' — ' + orders.length + ' total orders';
+
+    var seen = seenSet();
+    var newOrders = orders.filter(function (o) { return o && o.id && !seen.has(o.id); });
+
+    for (var i = 0; i < newOrders.length; i++) {
+      var order = newOrders[i];
+      try {
+        await EdenPrinter.printOrder(order);
+        seen.add(order.id);
+        saveSeen(seen);
+        logRow('Printed order #' + order.id.replace('ORD-', '') + (order.customer && order.customer.name ? ' — ' + order.customer.name : ''), 'ok');
+      } catch (err) {
+        logRow('Print failed for order #' + order.id.replace('ORD-', '') + ' — will retry', 'fail');
+      }
+    }
+  } catch (err) {
+    document.getElementById('poll-stat').textContent = 'Last poll failed at ' + stamp + ': ' + (err && err.message ? err.message : err);
+  }
+}
+
+(async function init() {
+  refreshPrinterUI();
+  EdenPrinter.onChange(refreshPrinterUI);
+  try {
+    var reconnected = await EdenPrinter.reconnectUSB();
+    if (reconnected) { setMsg('printer-msg', 'Reconnected automatically.', 'ok'); refreshPrinterUI(); }
+  } catch (e) { /* ignore — user can connect manually */ }
+})();
+</script>
+</body>
+</html>

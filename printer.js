@@ -159,9 +159,7 @@
     return { usb: 'usb' in navigator, bluetooth: 'bluetooth' in navigator };
   }
 
-  async function connectUSB() {
-    if (!('usb' in navigator)) throw new Error('WebUSB not supported.');
-    const device = await navigator.usb.requestDevice({ filters: [] });
+  async function openUSBDevice(device) {
     await device.open();
     if (device.configuration === null) await device.selectConfiguration(1);
     let endpoint = null;
@@ -186,6 +184,21 @@
       },
       close: async function () { try { await device.close(); } catch (e) {} },
     };
+  }
+
+  async function connectUSB() {
+    if (!('usb' in navigator)) throw new Error('WebUSB not supported.');
+    const device = await navigator.usb.requestDevice({ filters: [] });
+    return openUSBDevice(device);
+  }
+
+  // Reconnect to a previously-authorized USB device without a picker/user gesture.
+  // Returns null if none is available (caller should fall back to connectUSB()).
+  async function reconnectUSB() {
+    if (!('usb' in navigator)) throw new Error('WebUSB not supported.');
+    const devices = await navigator.usb.getDevices();
+    if (!devices.length) return null;
+    return openUSBDevice(devices[0]);
   }
 
   const BT_SERVICES = [
@@ -253,6 +266,17 @@
   function disconnectPrinter() {
     if (conn) { conn.close(); conn = null; }
     notify();
+  }
+
+  // Silent reconnect to a previously-authorized USB device, no picker/gesture required.
+  // Returns true if reconnected, false if no previously-authorized device was found.
+  async function tryReconnectUSB() {
+    const p = await reconnectUSB();
+    if (!p) return false;
+    if (conn) { try { conn.close(); } catch (e) {} }
+    conn = p;
+    notify();
+    return true;
   }
 
   // ----- print order: both receipts as a single job -----
@@ -327,6 +351,7 @@
     isSupported: isSup,
     status: status,
     connectUSB: function () { return connectPrinter('usb'); },
+    reconnectUSB: tryReconnectUSB,
     connectBluetooth: function () { return isNative ? connectBluetoothNative() : connectPrinter('bluetooth'); },
     disconnect: disconnectPrinter,
     printOrder: printOrder,
