@@ -12,6 +12,7 @@
     SIZE_NORMAL: [GS, 0x21, 0x00],
     SIZE_DOUBLE: [GS, 0x21, 0x11],
     SIZE_TALL:   [GS, 0x21, 0x01],
+    CUT:         [ESC, 0x64, 0x02],
   };
 
   const WIDTH_KEY = 'edenGrillPaperCols';
@@ -139,7 +140,7 @@
     b.rule();
     b.raw(CMD.ALIGN_CENTER).line('Made to order - Thank you!');
     b.line(dateStr + '  ' + timeStr);
-    b.raw(CMD.ALIGN_LEFT).feed(8).raw([0x0c]);
+    b.raw(CMD.ALIGN_LEFT).feed(4).raw(CMD.CUT);
     return b.toBytes();
   }
 
@@ -165,7 +166,7 @@
     });
     b.rule();
     b.raw(CMD.ALIGN_CENTER).line('Fire when ready!');
-    b.raw(CMD.ALIGN_LEFT).feed(6).raw([0x0c]);
+    b.raw(CMD.ALIGN_LEFT).feed(4).raw(CMD.CUT);
     return b.toBytes();
   }
 

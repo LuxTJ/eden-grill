@@ -28,8 +28,10 @@
      .receipt .r-note { padding-left: 8px; font-size: 11px; font-style: italic; }
      .receipt .r-total { font-weight: 700; font-size: 14px; }
      .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
-    .receipt .r-item-section { font-weight: 700; margin: 6px 0 2px; font-size: 12px; }
-    .receipt .r-item-line { padding-left: 8px; font-size: 11px; line-height: 1.4; }
+     .receipt .r-item-section { font-weight: 700; margin: 6px 0 2px; font-size: 12px; }
+     .receipt .r-item-line { padding-left: 8px; font-size: 11px; line-height: 1.4; }
+     .print-page { page-break-after: always !important; break-after: page !important; }
+     .print-page:last-child { page-break-after: auto !important; break-after: auto !important; }
    }
 </style>
 </head>
@@ -115,8 +117,6 @@
     <div class="confirm-check">✓</div>
     <h2>Order Placed!</h2>
     <p id="confirmation-text"></p>
-    <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy(pendingKitchenOrder)">Print Customer Copy</button>
-    <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy(pendingKitchenOrder)">Print Kitchen Copy</button>
     <button class="pay-btn" onclick="closeConfirmation()">Done</button>
   </div>
 </div>
@@ -555,11 +555,6 @@ async function placeOrder() {
 
   document.getElementById('order-confirmation').classList.add('active');
   closeMobileDrawer();
-  document.getElementById('confirmation-text').textContent =
-    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Printing receipts... Hand customer copy to guest, kitchen copy to cook.';
-  document.getElementById('btn-print-kitchen').style.display = 'none';
-  document.getElementById('btn-print-customer').style.display = 'none';
-  pendingKitchenOrder = null;
 
   cart = [];
   appliedPromo = null;
@@ -572,23 +567,30 @@ async function placeOrder() {
   // Sync to KV (fire-and-forget)
   fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
 
-  // Thermal printer — prints both receipts automatically
+  // Auto-print receipts
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
+    // Thermal printer — sends both receipts as one job with auto-cut
+    document.getElementById('confirmation-text').textContent =
+      'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Receipts printing on thermal. Hand customer copy to guest, kitchen copy to cook.';
     try { await EdenPrinter.printOrder(order); }
     catch(err) { console.error('Thermal printer failed:', err); }
+  } else if (window.EdenPrinter && EdenPrinter.customerReceiptHtml) {
+    // AirPrint — populate #print-area with both pages and trigger system print dialog
+    document.getElementById('confirmation-text').textContent =
+      'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Print dialog opening… Hand customer copy to guest, kitchen copy to cook.';
+    document.getElementById('print-area').innerHTML =
+      '<div class="print-page">' + EdenPrinter.customerReceiptHtml(order) + '</div>' +
+      '<div class="print-page">' + EdenPrinter.kitchenTicketHtml(order) + '</div>';
+    window.print();
+  } else {
+    document.getElementById('confirmation-text').textContent =
+      'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Order placed. Hand customer copy to guest, kitchen copy to cook.';
   }
-  // Show print buttons for mobile/AirPrint
-  pendingKitchenOrder = order;
-  document.getElementById('btn-print-customer').style.display = '';
-  document.getElementById('btn-print-kitchen').style.display = '';
-  document.getElementById('confirmation-text').textContent =
-    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap each button below to print. Hand customer copy to guest, kitchen copy to cook.';
 }
 
 function closeConfirmation() {
   document.getElementById('order-confirmation').classList.remove('active');
-  pendingKitchenOrder = null;
 }
 
 /* ── Option Formatting ── */
@@ -664,25 +666,7 @@ function receiptHtml(order, copyLabel) {
   '</div>';
 }
 
-var pendingKitchenOrder = null;
 
-function printCustomerCopy(order) {
-  if (!order) order = pendingKitchenOrder;
-  if (!order) return;
-  document.getElementById('print-area').innerHTML = '';
-  document.getElementById('print-area').innerHTML = receiptHtml(order, 'CUSTOMER COPY');
-  window.print();
-  document.getElementById('btn-print-customer').style.display = 'none';
-}
-
-function printKitchenCopy(order) {
-  if (!order) order = pendingKitchenOrder;
-  if (!order) return;
-  document.getElementById('print-area').innerHTML = '';
-  document.getElementById('print-area').innerHTML = receiptHtml(order, 'KITCHEN COPY');
-  window.print();
-  document.getElementById('btn-print-kitchen').style.display = 'none';
-}
 
 /* ── Printer Settings ── */
 function printerMsg(text, kind) {
