@@ -58,22 +58,40 @@
   // Group item options: "For Two" combos split into Item 1 / Item 2 sections, regular items grouped by label
   function formatItemOptions(options) {
     if (!options || options.length === 0) return [];
-    var hasSuffixes = options.some(function(opt) {
+    var hasNumberedOptions = options.some(function(opt) {
       var ci = opt.indexOf(': '); return ci > 0 && /\s\d+$/.test(opt.substring(0, ci).trim());
     });
-    if (hasSuffixes) {
-      var g = { '1': [], '2': [] };
-      var unnumbered = [];
+    if (hasNumberedOptions) {
+      var numberedBaseLabels = {};
+      options.forEach(function(opt) {
+        var ci = opt.indexOf(': '); if (ci === -1) return;
+        var label = opt.substring(0, ci).trim();
+        var m = label.match(/^(.+)\s(\d+)$/);
+        if (m) numberedBaseLabels[m[1]] = true;
+      });
+      var rawG = { '1': {}, '2': {}, 's': {} };
       options.forEach(function(opt) {
         var ci = opt.indexOf(': '); if (ci === -1) return;
         var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
         var m = label.match(/^(.+)\s(\d+)$/);
-        if (m && g[m[2]]) g[m[2]].push({ label: m[1], value: value });
-        else unnumbered.push({ label: label, value: value });
+        var targetGroup, baseLabel;
+        if (m && rawG[m[2]]) {
+          targetGroup = m[2]; baseLabel = m[1];
+        } else if (numberedBaseLabels[label]) {
+          targetGroup = '1'; baseLabel = label;
+        } else {
+          targetGroup = 's'; baseLabel = label;
+        }
+        if (!rawG[targetGroup][baseLabel]) rawG[targetGroup][baseLabel] = [];
+        rawG[targetGroup][baseLabel].push(value);
       });
+      var g1 = [], g2 = [], gs = [];
+      Object.keys(rawG['s']).forEach(function(l) { gs.push({ label: l, value: rawG['s'][l].join(', ') }); });
+      Object.keys(rawG['1']).forEach(function(l) { g1.push({ label: l, value: rawG['1'][l].join(', ') }); });
+      Object.keys(rawG['2']).forEach(function(l) { g2.push({ label: l, value: rawG['2'][l].join(', ') }); });
       return [
-        { section: 'Item 1', items: unnumbered.concat(g['1']) },
-        { section: 'Item 2', items: g['2'] }
+        { section: 'Item 1', items: gs.concat(g1) },
+        { section: 'Item 2', items: gs.concat(g2) }
       ];
     }
     var grouped = {}, order = [];
