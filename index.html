@@ -164,6 +164,19 @@
   </div>
 </div>
 
+<!-- Mobile bottom order bar -->
+<div class="mobile-order-bar" id="mobile-order-bar" onclick="toggleMobileSidebar()">
+  <div class="mobile-order-bar-inner">
+    <div class="mobile-order-bar-left">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+      <span class="mobile-order-bar-badge" id="mobile-order-count">0</span>
+      <span id="mobile-order-label">Tap to view order</span>
+    </div>
+    <div class="mobile-order-bar-total" id="mobile-order-total">$0.00</div>
+  </div>
+</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
 <div id="print-area"></div>
 
 <script src="capacitor-bridge.js"></script>
@@ -316,6 +329,31 @@ function addFromModifier() {
 }
 
 /* ── Sidebar ── */
+function updateMobileBar() {
+  var count = cart.reduce(function(s, i) { return s + i.quantity; }, 0);
+  var total = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
+  document.getElementById('mobile-order-count').textContent = count;
+  document.getElementById('mobile-order-label').textContent = count > 0 ? count + ' item' + (count !== 1 ? 's' : '') + ' — tap to view' : 'Tap to view order';
+  document.getElementById('mobile-order-total').textContent = '$' + total.toFixed(2);
+}
+
+function toggleMobileSidebar() {
+  var sidebar = document.getElementById('pos-sidebar');
+  var backdrop = document.getElementById('sidebar-backdrop');
+  if (sidebar.classList.contains('open')) {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('active');
+  } else {
+    sidebar.classList.add('open');
+    backdrop.classList.add('active');
+  }
+}
+
+function closeMobileSidebar() {
+  document.getElementById('pos-sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('active');
+}
+
 function renderSidebar() {
   var items = document.getElementById('sidebar-items');
   if (cart.length === 0) {
@@ -354,6 +392,7 @@ function renderSidebar() {
     discRow.style.display = 'none';
     document.getElementById('sidebar-total').textContent = '$' + subtotal.toFixed(2);
   }
+  updateMobileBar();
 }
 
 function changeQty(i, delta) {
@@ -418,6 +457,7 @@ async function placeOrder() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 
   document.getElementById('order-confirmation').classList.add('active');
+  closeMobileSidebar();
   document.getElementById('confirmation-text').textContent =
     'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Printing receipts... Hand customer copy to guest, kitchen copy to cook.';
   document.getElementById('btn-print-kitchen').style.display = 'none';
