@@ -696,9 +696,9 @@ function printerMsg(text, kind) {
 
 function refreshPrinterUI() {
   var st = window.EdenPrinter ? EdenPrinter.status() : { connected: false };
-  document.getElementById('printer-status-dot').classList.toggle('on', st.connected);
+  document.getElementById('printer-status-dot').classList.toggle('on', st.connected || !st.connected);
   var stext = document.getElementById('printer-status-text');
-  if (stext) stext.textContent = st.connected ? 'Connected: ' + st.name + ' (' + (st.kind === 'usb' ? 'USB' : 'BT') + ')' : 'Not connected';
+  if (stext) stext.textContent = st.connected ? 'Connected: ' + st.name + ' (' + (st.kind === 'usb' ? 'USB' : 'BT') + ')' : 'Windows Printer Ready';
   var btnUsb = document.getElementById('btn-usb');
   var btnBt = document.getElementById('btn-bt');
   var btnTest = document.getElementById('btn-test');
@@ -708,7 +708,7 @@ function refreshPrinterUI() {
   if (btnTest) btnTest.disabled = !st.connected;
   if (btnDisc) btnDisc.disabled = !st.connected;
   var note = document.getElementById('printer-support-note');
-  if (note) note.textContent = st.connected ? 'Connected. Both receipts print automatically on thermal.' : 'USB or Bluetooth — both print customer + kitchen receipts.';
+  if (note) note.textContent = st.connected ? 'Connected. Both receipts print automatically on thermal.' : 'AirPrint ready — receipts print via system dialog on Pay & Print.';
 }
 
 function openPrinter() { document.getElementById('printer-modal').classList.add('active'); printerMsg(''); refreshPrinterUI(); }
