@@ -600,17 +600,18 @@ function formatItemOptions(options) {
     var ci = opt.indexOf(': '); return ci > 0 && /\s\d+$/.test(opt.substring(0, ci).trim());
   });
   if (hasSuffixes) {
-    var g = { '1': [], '2': [], 's': [] };
+    var g = { '1': [], '2': [] };
+    var unnumbered = [];
     options.forEach(function(opt) {
       var ci = opt.indexOf(': '); if (ci === -1) return;
       var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
       var m = label.match(/^(.+)\s(\d+)$/);
       if (m && g[m[2]]) g[m[2]].push({ label: m[1], value: value });
-      else g.s.push({ label: label, value: value });
+      else unnumbered.push({ label: label, value: value });
     });
     return [
-      { section: 'Item 1', items: g.s.concat(g['1']) },
-      { section: 'Item 2', items: g.s.concat(g['2']) }
+      { section: 'Item 1', items: unnumbered.concat(g['1']) },
+      { section: 'Item 2', items: g['2'] }
     ];
   }
   var grouped = {}, order = [];
