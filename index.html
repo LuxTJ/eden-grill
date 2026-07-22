@@ -55,16 +55,37 @@
   </div>
 </header>
 
-<main class="pos-main" id="pos-main"></main>
-
-<div class="order-bar" id="order-bar" onclick="openCart()">
-  <div class="order-bar-inner">
-    <div class="order-bar-left">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-      <span class="order-bar-count" id="order-bar-count">0 items</span>
-    </div>
-    <div class="order-bar-total" id="order-bar-total">$0.00</div>
+<!-- Two-column workspace -->
+<div class="pos-workspace">
+  <!-- Left: Menu -->
+  <div class="pos-menu-panel">
+    <main id="pos-main"></main>
   </div>
+
+  <!-- Right: Order Sidebar -->
+  <aside class="pos-sidebar" id="pos-sidebar">
+    <div class="sidebar-header">
+      <h2>Current Order</h2>
+      <input type="text" class="sidebar-customer-input" id="customer-name" placeholder="Customer name for ticket" autocomplete="off">
+    </div>
+    <div class="sidebar-items" id="sidebar-items">
+      <div class="sidebar-empty">Tap an item to start an order</div>
+    </div>
+    <div class="sidebar-promo">
+      <input type="text" id="promo-input" placeholder="Promo code" autocomplete="off">
+      <button onclick="applyPromo()">Apply</button>
+    </div>
+    <div class="sidebar-promo-msg" id="promo-msg"></div>
+    <div class="sidebar-summary">
+      <div class="sidebar-summary-row"><span>Subtotal</span><span id="sidebar-subtotal">$0.00</span></div>
+      <div class="sidebar-summary-row sidebar-summary-discount" id="sidebar-discount-row" style="display:none"><span>Discount</span><span id="sidebar-discount">-$0.00</span></div>
+      <div class="sidebar-summary-row sidebar-summary-total"><span>TOTAL</span><span id="sidebar-total">$0.00</span></div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="sidebar-pay-btn" onclick="placeOrder()">Pay Cash &amp; Print</button>
+      <button class="sidebar-clear-btn" onclick="clearOrder()">Clear Order</button>
+    </div>
+  </aside>
 </div>
 
 <!-- Modifier Modal -->
@@ -85,35 +106,6 @@
       <div class="mod-total" id="mod-total">$0.00</div>
       <button class="add-btn" id="mod-add-btn" onclick="addFromModifier()">Add to Order</button>
     </div>
-  </div>
-</div>
-
-<!-- Cart Modal -->
-<div class="modal-overlay" id="cart-modal">
-  <div class="cart-panel">
-    <div class="cart-header">
-      <div>
-        <h2>Current Order</h2>
-        <div class="cart-meta"><span id="cart-order-num"></span> · <span id="cart-timestamp"></span></div>
-      </div>
-      <button class="modal-close" onclick="closeCart()">✕</button>
-    </div>
-    <div class="cart-customer">
-      <label>Customer Name</label>
-      <input type="text" id="customer-name" placeholder="Name for ticket" autocomplete="off">
-    </div>
-    <div class="cart-items" id="cart-items"></div>
-    <div class="cart-promo">
-      <input type="text" id="promo-input" placeholder="Promo code" autocomplete="off">
-      <button onclick="applyPromo()">Apply</button>
-    </div>
-    <div class="promo-msg" id="promo-msg"></div>
-    <div class="cart-summary">
-      <div class="cart-summary-row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
-      <div class="cart-summary-row cart-summary-discount" id="cart-discount-row" style="display:none"><span>Discount</span><span id="cart-discount">-$0.00</span></div>
-      <div class="cart-summary-row cart-summary-total"><span>TOTAL</span><span id="cart-total">$0.00</span></div>
-    </div>
-    <button class="pay-btn" onclick="placeOrder()">Pay Cash &amp; Print</button>
   </div>
 </div>
 
@@ -203,8 +195,9 @@ function updateClock() {
 setInterval(updateClock, 10000);
 updateClock();
 
+/* ── Menu Grid ── */
 function renderAll() {
-  const main = document.getElementById('pos-main');
+  var main = document.getElementById('pos-main');
   var html = '';
   Object.keys(SECTION_META).forEach(function(key) {
     var items = menuData[key] || [];
@@ -224,6 +217,7 @@ function renderAll() {
   main.innerHTML = html;
 }
 
+/* ── Modifier Modal ── */
 function openModifier(key, idx) {
   var parts = key.split('-');
   var cat = parts[0];
@@ -269,9 +263,7 @@ function openModifier(key, idx) {
   document.getElementById('modifier-modal').classList.add('active');
 }
 
-function closeModifiers() {
-  document.getElementById('modifier-modal').classList.remove('active');
-}
+function closeModifiers() { document.getElementById('modifier-modal').classList.remove('active'); }
 
 function modQty(delta) {
   modQtyVal = Math.max(1, modQtyVal + delta);
@@ -298,23 +290,16 @@ function addFromModifier() {
   var groups = modItem.optionGroups || [];
   var options = [];
 
-  // Radio option groups — use group label as prefix
   groups.forEach(function(group, gi) {
     if (group.type === 'radio') {
       var checked = modal.querySelector('input[name="mod-g' + gi + '"]:checked');
-      if (checked) {
-        options.push(group.label + ': ' + checked.value);
-      }
+      if (checked) options.push(group.label + ': ' + checked.value);
     }
   });
-
-  // Checkbox option groups — use group label as prefix
   groups.forEach(function(group, gi) {
     if (group.type === 'checkbox') {
       var checked = Array.from(modal.querySelectorAll('input[name^="mod-g' + gi + '"]:checked'));
-      checked.forEach(function(cb) {
-        options.push(group.label + ': ' + cb.value);
-      });
+      checked.forEach(function(cb) { options.push(group.label + ': ' + cb.value); });
     }
   });
 
@@ -327,72 +312,90 @@ function addFromModifier() {
     quantity: modQtyVal
   });
   closeModifiers();
-  updateOrderBar();
+  renderSidebar();
 }
 
-function updateOrderBar() {
-  var count = cart.reduce(function(s, i) { return s + i.quantity; }, 0);
-  var total = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
-  document.getElementById('order-bar-count').textContent = count + ' item' + (count !== 1 ? 's' : '');
-  document.getElementById('order-bar-total').textContent = '$' + total.toFixed(2);
-}
-
-function openCart() {
-  var now = new Date();
-  document.getElementById('cart-order-num').textContent = 'ORD-' + Date.now().toString().slice(-6);
-  document.getElementById('cart-timestamp').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  var items = document.getElementById('cart-items');
+/* ── Sidebar ── */
+function renderSidebar() {
+  var items = document.getElementById('sidebar-items');
   if (cart.length === 0) {
-    items.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:2rem 0;">No items yet</p>';
+    items.innerHTML = '<div class="sidebar-empty">Tap an item to start an order</div>';
   } else {
     items.innerHTML = cart.map(function(item, i) {
-      return '<div class="cart-item">' +
-        '<div class="cart-item-top">' +
-          '<span class="cart-item-qty">x' + item.quantity + '</span>' +
-          '<span class="cart-item-name">' + item.name + '</span>' +
-          '<span class="cart-item-price">$' + (item.unitTotal * item.quantity).toFixed(2) + '</span>' +
+      return '<div class="sidebar-item">' +
+        '<div class="sidebar-item-top">' +
+          '<span class="sidebar-item-name">' + item.name + '</span>' +
+          '<span class="sidebar-item-price">$' + (item.unitTotal * item.quantity).toFixed(2) + '</span>' +
         '</div>' +
-        (item.options.length ? '<div class="cart-item-opts">' + formatItemOptionsHtml(item.options) + '</div>' : '') +
-        (item.note ? '<div class="cart-item-note">' + item.note + '</div>' : '') +
-        '<button class="cart-item-remove" onclick="removeFromCart(' + i + ')">Remove</button>' +
+        (item.options.length ? '<div class="sidebar-item-opts">' + formatItemOptionsHtml(item.options) + '</div>' : '') +
+        (item.note ? '<div class="sidebar-item-note">' + item.note + '</div>' : '') +
+        '<div class="sidebar-item-bottom">' +
+          '<div class="sidebar-qty">' +
+            '<button onclick="changeQty(' + i + ', -1)">−</button>' +
+            '<span>' + item.quantity + '</span>' +
+            '<button onclick="changeQty(' + i + ', 1)">+</button>' +
+          '</div>' +
+          '<button class="sidebar-item-remove" onclick="removeFromCart(' + i + ')">Remove</button>' +
+        '</div>' +
       '</div>';
     }).join('');
   }
+
   var subtotal = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
-  document.getElementById('cart-subtotal').textContent = '$' + subtotal.toFixed(2);
-  var discRow = document.getElementById('cart-discount-row');
+  document.getElementById('sidebar-subtotal').textContent = '$' + subtotal.toFixed(2);
+
+  var discRow = document.getElementById('sidebar-discount-row');
   if (appliedPromo) {
     var disc = subtotal * appliedPromo.rate;
-    document.getElementById('cart-discount').textContent = '-$' + disc.toFixed(2);
-    document.getElementById('cart-total').textContent = '$' + (subtotal - disc).toFixed(2);
+    document.getElementById('sidebar-discount').textContent = '-$' + disc.toFixed(2);
+    document.getElementById('sidebar-total').textContent = '$' + (subtotal - disc).toFixed(2);
     discRow.style.display = '';
   } else {
     discRow.style.display = 'none';
-    document.getElementById('cart-total').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('sidebar-total').textContent = '$' + subtotal.toFixed(2);
   }
-  document.getElementById('cart-modal').classList.add('active');
 }
 
-function closeCart() { document.getElementById('cart-modal').classList.remove('active'); }
-function removeFromCart(i) { cart.splice(i, 1); updateOrderBar(); openCart(); }
+function changeQty(i, delta) {
+  cart[i].quantity = Math.max(1, cart[i].quantity + delta);
+  renderSidebar();
+}
+
+function removeFromCart(i) {
+  cart.splice(i, 1);
+  renderSidebar();
+}
+
+function clearOrder() {
+  if (cart.length === 0) return;
+  if (!confirm('Clear entire order?')) return;
+  cart = [];
+  appliedPromo = null;
+  document.getElementById('promo-input').value = '';
+  document.getElementById('promo-msg').textContent = '';
+  document.getElementById('promo-msg').className = 'sidebar-promo-msg';
+  document.getElementById('customer-name').value = '';
+  renderSidebar();
+}
 
 function applyPromo() {
   var input = document.getElementById('promo-input');
   var msg = document.getElementById('promo-msg');
   var code = input.value.trim().toUpperCase();
-  if (!code) { appliedPromo = null; msg.textContent = ''; msg.className = 'promo-msg'; openCart(); return; }
+  if (!code) { appliedPromo = null; msg.textContent = ''; msg.className = 'sidebar-promo-msg'; renderSidebar(); return; }
   if (PROMO_CODES[code] !== undefined) {
     appliedPromo = { code: code, rate: PROMO_CODES[code] };
     msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
-    msg.className = 'promo-msg ok';
+    msg.className = 'sidebar-promo-msg ok';
   } else {
     appliedPromo = null;
     msg.textContent = 'Invalid code';
-    msg.className = 'promo-msg err';
+    msg.className = 'sidebar-promo-msg err';
   }
-  openCart();
+  renderSidebar();
 }
 
+/* ── Place Order ── */
 async function placeOrder() {
   var name = document.getElementById('customer-name').value.trim();
   if (!name) { alert('Enter a name for the order ticket'); return; }
@@ -414,48 +417,44 @@ async function placeOrder() {
   all.push(order);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 
-  // Save order immediately, then show confirmation and try printing
-  closeCart();
   document.getElementById('order-confirmation').classList.add('active');
   document.getElementById('confirmation-text').textContent =
-    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Order placed! Printing receipts... Hand customer copy to guest, kitchen copy to cook.';
+    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Printing receipts... Hand customer copy to guest, kitchen copy to cook.';
   document.getElementById('btn-print-kitchen').style.display = 'none';
+  document.getElementById('btn-print-customer').style.display = 'none';
   pendingKitchenOrder = null;
-  
+
   cart = [];
   appliedPromo = null;
   document.getElementById('promo-input').value = '';
   document.getElementById('promo-msg').textContent = '';
-  document.getElementById('promo-msg').className = 'promo-msg';
+  document.getElementById('promo-msg').className = 'sidebar-promo-msg';
   document.getElementById('customer-name').value = '';
-  updateOrderBar();
-  
-  // Sync to KV (fire-and-forget — doesn't block checkout)
+  renderSidebar();
+
+  // Sync to KV (fire-and-forget)
   fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
-  
-  // Try thermal printer first (prints both receipts), then show print buttons.
-  // NOTE: iOS AirPrint does not reliably honor CSS page-break for a combined
-  // single print job (confirmed by prior attempts in this repo's history) — a
-  // combined job silently drops to one page. Two separate window.print() calls,
-  // each tied to its own button tap, is the proven reliable approach here.
+
+  // Thermal printer — prints both receipts automatically
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
     try { await EdenPrinter.printOrder(order); }
     catch(err) { console.error('Thermal printer failed:', err); }
   }
-  // Show both print buttons on confirmation screen
+  // Show print buttons for mobile/AirPrint
   pendingKitchenOrder = order;
   document.getElementById('btn-print-customer').style.display = '';
   document.getElementById('btn-print-kitchen').style.display = '';
   document.getElementById('confirmation-text').textContent =
     'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap each button below to print. Hand customer copy to guest, kitchen copy to cook.';
-
-  console.log('Order placed and receipts printing.');
 }
 
-function closeConfirmation() { document.getElementById('order-confirmation').classList.remove('active'); }
+function closeConfirmation() {
+  document.getElementById('order-confirmation').classList.remove('active');
+  pendingKitchenOrder = null;
+}
 
-// Group item options: "For Two" combos split into Item 1 / Item 2 sections, regular items grouped by label
+/* ── Option Formatting ── */
 function formatItemOptions(options) {
   if (!options || options.length === 0) return [];
   var hasSuffixes = options.some(function(opt) {
@@ -493,27 +492,16 @@ function formatItemOptionsHtml(options) {
   }).join('');
 }
 
+/* ── Receipt HTML (for AirPrint) ── */
 function receiptHtml(order, copyLabel) {
   var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
   var itemsHtml = order.items.map(function(i) {
-    // Detect combo items (items specifically designed for 2 people)
     var isTwoPersonCombo = i.name.includes('2 ');
-    
     var displayQty = i.quantity !== null && i.quantity !== undefined ? i.quantity : 1;
     var displayText = displayQty + 'x ' + i.name;
-    
     if (isTwoPersonCombo) {
-      // For two-person combos, show "For 2" or "(2 people)" indicator
-      if (i.name.includes('Combo')) {
-        displayText = displayQty + 'x ' + i.name + ' (FOR 2)' + (displayQty > 1 ? ' x' + displayQty : '');
-      } else {
-        displayText = displayQty + 'x ' + i.name + ' (FOR 2)' + (displayQty > 1 ? ' x' + displayQty : '');
-      }
-    } else if (displayQty > 1) {
-      // For regular items, show quantity as before
-      displayText = displayQty + 'x ' + i.name;
+      displayText = displayQty + 'x ' + i.name + ' (FOR 2)' + (displayQty > 1 ? ' x' + displayQty : '');
     }
-    
     return '<div class="r-row"><span>' + displayText + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
       (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
       (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
@@ -539,13 +527,6 @@ function receiptHtml(order, copyLabel) {
   '</div>';
 }
 
-// Two separate print jobs (customer, then kitchen) instead of one 2-page job —
-// most receipt-printer OS drivers and mobile browsers don't paginate a single
-// job reliably. Triggering the second job automatically (e.g. off a timer or
-// an 'afterprint' listener) fired window.print() while the first dialog was
-// still up, so the browser yanked it closed to open the new one — the dialog
-// would flash and vanish. Firing each print only from a direct button click
-// keeps every window.print() call tied to its own real user gesture.
 var pendingKitchenOrder = null;
 
 function printCustomerCopy(order) {
@@ -566,11 +547,7 @@ function printKitchenCopy(order) {
   document.getElementById('btn-print-kitchen').style.display = 'none';
 }
 
-function closeConfirmation() {
-  document.getElementById('order-confirmation').classList.remove('active');
-  pendingKitchenOrder = null;
-}
-
+/* ── Printer Settings ── */
 function printerMsg(text, kind) {
   var el = document.getElementById('printer-msg');
   el.textContent = text || '';
@@ -599,21 +576,13 @@ function closePrinter() { document.getElementById('printer-modal').classList.rem
 
 async function connectPrinter(kind) {
   var isNative = window.EdenPrinter && EdenPrinter.isNativePlatform();
-
   if (kind === 'usb' && !isNative && !('usb' in navigator)) {
-    printerMsg('USB not available on this device. Try Chrome or Edge on a desktop computer for USB, or use AirPrint below.', 'err');
-    return;
+    printerMsg('USB not available on this device. Try Chrome or Edge on a desktop computer for USB, or use AirPrint below.', 'err'); return;
   }
-  if (kind === 'usb' && isNative) {
-    printerMsg('USB printing is not available on mobile. Use Bluetooth instead.', 'err');
-    return;
-  }
+  if (kind === 'usb' && isNative) { printerMsg('USB printing is not available on mobile. Use Bluetooth instead.', 'err'); return; }
   if (kind === 'bluetooth' && !isNative && !('bluetooth' in navigator)) {
-    // iOS/Safari — no Web Bluetooth, but AirPrint works with many thermal printers
-    printerMsg('Web Bluetooth is not available in this browser. If your printer supports AirPrint (most Epson/Star thermal printers do), you can print directly from this device — just place an order and it will appear in the AirPrint dialog.', 'err');
-    return;
+    printerMsg('Web Bluetooth is not available in this browser. If your printer supports AirPrint (most Epson/Star thermal printers do), you can print directly from this device — just place an order and it will appear in the AirPrint dialog.', 'err'); return;
   }
-
   printerMsg(kind === 'usb' ? 'Opening USB device picker…' : 'Scanning for nearby Bluetooth printers…');
   try {
     if (kind === 'usb') await EdenPrinter.connectUSB();
@@ -644,6 +613,7 @@ async function testPrint() {
   catch (err) { printerMsg(err && err.message ? err.message : 'Test print failed.', 'err'); }
 }
 
+/* ── Reports ── */
 function openReports() {
   var pin = prompt('Enter PIN to access reports:');
   if (pin !== '7217') return;
@@ -726,8 +696,10 @@ async function emailReport() {
   if (btn) btn.textContent = 'Email Report';
 }
 
+/* ── Init ── */
 if (window.EdenPrinter) EdenPrinter.onChange(refreshPrinterUI);
 refreshPrinterUI();
+renderSidebar();
 
 async function load() {
   var res = await fetch('menu.json', { cache: 'no-store' });
