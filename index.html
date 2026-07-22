@@ -117,6 +117,8 @@
     <div class="confirm-check">✓</div>
     <h2>Order Placed!</h2>
     <p id="confirmation-text"></p>
+    <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy()">Print Customer Copy</button>
+    <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy()">Print Kitchen Copy</button>
     <button class="pay-btn" onclick="closeConfirmation()">Done</button>
   </div>
 </div>
@@ -555,6 +557,11 @@ async function placeOrder() {
 
   document.getElementById('order-confirmation').classList.add('active');
   closeMobileDrawer();
+  document.getElementById('confirmation-text').textContent =
+    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap a button below to print. Hand customer copy to guest, kitchen copy to cook.';
+  document.getElementById('btn-print-customer').style.display = '';
+  document.getElementById('btn-print-kitchen').style.display = '';
+  pendingKitchenOrder = order;
 
   cart = [];
   appliedPromo = null;
@@ -567,30 +574,33 @@ async function placeOrder() {
   // Sync to KV (fire-and-forget)
   fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
 
-  // Auto-print receipts
+  // Thermal printer — auto-print both receipts
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
   if (printerReady) {
-    // Thermal printer — sends both receipts as one job with auto-cut
-    document.getElementById('confirmation-text').textContent =
-      'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Receipts printing on thermal. Hand customer copy to guest, kitchen copy to cook.';
     try { await EdenPrinter.printOrder(order); }
     catch(err) { console.error('Thermal printer failed:', err); }
-  } else if (window.EdenPrinter && EdenPrinter.customerReceiptHtml) {
-    // AirPrint — populate #print-area with both pages and trigger system print dialog
-    document.getElementById('confirmation-text').textContent =
-      'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Print dialog opening… Hand customer copy to guest, kitchen copy to cook.';
-    document.getElementById('print-area').innerHTML =
-      '<div class="print-page">' + EdenPrinter.customerReceiptHtml(order) + '</div>' +
-      '<div class="print-page">' + EdenPrinter.kitchenTicketHtml(order) + '</div>';
-    window.print();
-  } else {
-    document.getElementById('confirmation-text').textContent =
-      'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Order placed. Hand customer copy to guest, kitchen copy to cook.';
   }
 }
 
 function closeConfirmation() {
   document.getElementById('order-confirmation').classList.remove('active');
+  pendingKitchenOrder = null;
+}
+
+var pendingKitchenOrder = null;
+
+function printCustomerCopy() {
+  var order = pendingKitchenOrder;
+  if (!order) return;
+  document.getElementById('print-area').innerHTML = EdenPrinter.customerReceiptHtml(order);
+  window.print();
+}
+
+function printKitchenCopy() {
+  var order = pendingKitchenOrder;
+  if (!order) return;
+  document.getElementById('print-area').innerHTML = EdenPrinter.kitchenTicketHtml(order);
+  window.print();
 }
 
 /* ── Option Formatting ── */
