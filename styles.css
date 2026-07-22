@@ -116,9 +116,9 @@ body { display: flex; flex-direction: column; height: 100dvh; }
 
 /* Right: Order Sidebar */
 .pos-sidebar {
-  width: 340px;
-  max-width: 35vw;
-  min-width: 280px;
+  width: 380px;
+  max-width: 40vw;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   background: #111;
