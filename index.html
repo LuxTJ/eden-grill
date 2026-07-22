@@ -765,10 +765,12 @@ function renderReports() {
   var promoMap = {};
   all.forEach(function(o) {
     if (!o.promoCode) return;
-    if (!promoMap[o.promoCode]) promoMap[o.promoCode] = { count: 0, revenue: 0, discount: 0 };
+    if (!promoMap[o.promoCode]) promoMap[o.promoCode] = { count: 0, revenue: 0, discount: 0, names: {} };
     promoMap[o.promoCode].count++;
     promoMap[o.promoCode].revenue += o.total || 0;
     promoMap[o.promoCode].discount += o.discount || 0;
+    var cname = o.customer && o.customer.name ? o.customer.name : 'Unknown';
+    promoMap[o.promoCode].names[cname] = (promoMap[o.promoCode].names[cname] || 0) + 1;
   });
   var promoSorted = Object.keys(promoMap).sort(function(a, b) { return promoMap[b].count - promoMap[a].count; });
 
@@ -784,10 +786,12 @@ function renderReports() {
 
   if (promoSorted.length) {
     html += '<div class="report-section"><h3>Promo Code Usage</h3>';
-    html += '<table class="report-table"><tr><th>Code</th><th>Used</th><th>Revenue</th><th>Discount</th></tr>';
+    html += '<table class="report-table"><tr><th>Code</th><th>Used</th><th>Revenue</th><th>Discount</th><th>Names</th></tr>';
     promoSorted.forEach(function(code) {
       var p = promoMap[code];
-      html += '<tr><td>' + code + '</td><td>' + p.count + '</td><td>$' + p.revenue.toFixed(2) + '</td><td>-$' + p.discount.toFixed(2) + '</td></tr>';
+      var names = Object.keys(p.names).sort(function(a, b) { return p.names[b] - p.names[a]; });
+      var namesHtml = names.map(function(n) { return n + (p.names[n] > 1 ? ' (' + p.names[n] + ')' : ''); }).join(', ');
+      html += '<tr><td>' + code + '</td><td>' + p.count + '</td><td>$' + p.revenue.toFixed(2) + '</td><td>-$' + p.discount.toFixed(2) + '</td><td>' + namesHtml + '</td></tr>';
     });
     html += '</table></div>';
   }
