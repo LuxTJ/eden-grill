@@ -165,17 +165,45 @@
 </div>
 
 <!-- Mobile bottom order bar -->
-<div class="mobile-order-bar" id="mobile-order-bar" onclick="toggleMobileSidebar()">
-  <div class="mobile-order-bar-inner">
-    <div class="mobile-order-bar-left">
+<div class="order-bar" id="order-bar" onclick="openMobileDrawer()">
+  <div class="order-bar-inner">
+    <div class="order-bar-left">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-      <span class="mobile-order-bar-badge" id="mobile-order-count">0</span>
-      <span id="mobile-order-label">Tap to view order</span>
+      <span class="order-bar-count" id="order-bar-count">0 items</span>
     </div>
-    <div class="mobile-order-bar-total" id="mobile-order-total">$0.00</div>
+    <div class="order-bar-total" id="order-bar-total">$0.00</div>
   </div>
 </div>
-<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
+<!-- Mobile order drawer (full-screen modal, hidden on desktop) -->
+<div class="modal-overlay" id="mobile-drawer">
+  <div class="drawer-panel">
+    <div class="modifier-header">
+      <h2>Current Order</h2>
+      <button class="modal-close" onclick="closeMobileDrawer()">✕</button>
+    </div>
+    <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border)">
+      <input type="text" class="sidebar-customer-input" id="drawer-customer-name" placeholder="Customer name for ticket" autocomplete="off">
+    </div>
+    <div class="drawer-items" id="drawer-items">
+      <div class="sidebar-empty">Tap an item to start an order</div>
+    </div>
+    <div style="display:flex;gap:0.3rem;padding:0.4rem 0.75rem">
+      <input type="text" id="drawer-promo-input" placeholder="Promo code" autocomplete="off" style="flex:1;padding:0.5rem 0.6rem;background:#000;border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.8rem;text-transform:uppercase">
+      <button onclick="applyPromoMobile()" style="padding:0.5rem 0.7rem;background:#222;border:1px solid #333;border-radius:6px;color:#fff;font-weight:600;font-size:0.8rem;cursor:pointer">Apply</button>
+    </div>
+    <div class="sidebar-promo-msg" id="drawer-promo-msg"></div>
+    <div style="padding:0.6rem 0.75rem;border-top:1px solid var(--border)">
+      <div class="sidebar-summary-row"><span>Subtotal</span><span id="drawer-subtotal">$0.00</span></div>
+      <div class="sidebar-summary-row sidebar-summary-discount" id="drawer-discount-row" style="display:none"><span>Discount</span><span id="drawer-discount">-$0.00</span></div>
+      <div class="sidebar-summary-row sidebar-summary-total"><span>TOTAL</span><span id="drawer-total">$0.00</span></div>
+    </div>
+    <div style="padding:0.6rem 0.75rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:0.4rem">
+      <button class="sidebar-pay-btn" onclick="placeOrderMobile()">Pay Cash &amp; Print</button>
+      <button class="sidebar-clear-btn" onclick="clearOrderMobile()">Clear Order</button>
+    </div>
+  </div>
+</div>
 
 <div id="print-area"></div>
 
@@ -328,30 +356,99 @@ function addFromModifier() {
   renderSidebar();
 }
 
-/* ── Sidebar ── */
-function updateMobileBar() {
+/* ── Sidebar + Mobile Drawer ── */
+function updateOrderBar() {
   var count = cart.reduce(function(s, i) { return s + i.quantity; }, 0);
   var total = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
-  document.getElementById('mobile-order-count').textContent = count;
-  document.getElementById('mobile-order-label').textContent = count > 0 ? count + ' item' + (count !== 1 ? 's' : '') + ' — tap to view' : 'Tap to view order';
-  document.getElementById('mobile-order-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('order-bar-count').textContent = count + ' item' + (count !== 1 ? 's' : '');
+  document.getElementById('order-bar-total').textContent = '$' + total.toFixed(2);
 }
 
-function toggleMobileSidebar() {
-  var sidebar = document.getElementById('pos-sidebar');
-  var backdrop = document.getElementById('sidebar-backdrop');
-  if (sidebar.classList.contains('open')) {
-    sidebar.classList.remove('open');
-    backdrop.classList.remove('active');
+function renderMobileDrawer() {
+  var items = document.getElementById('drawer-items');
+  if (cart.length === 0) {
+    items.innerHTML = '<div class="sidebar-empty">Tap an item to start an order</div>';
   } else {
-    sidebar.classList.add('open');
-    backdrop.classList.add('active');
+    items.innerHTML = cart.map(function(item, i) {
+      return '<div class="sidebar-item">' +
+        '<div class="sidebar-item-top">' +
+          '<span class="sidebar-item-name">' + item.name + '</span>' +
+          '<span class="sidebar-item-price">$' + (item.unitTotal * item.quantity).toFixed(2) + '</span>' +
+        '</div>' +
+        (item.options.length ? '<div class="sidebar-item-opts">' + formatItemOptionsHtml(item.options) + '</div>' : '') +
+        (item.note ? '<div class="sidebar-item-note">' + item.note + '</div>' : '') +
+        '<div class="sidebar-item-bottom">' +
+          '<div class="sidebar-qty">' +
+            '<button onclick="changeQty(' + i + ', -1)">−</button>' +
+            '<span>' + item.quantity + '</span>' +
+            '<button onclick="changeQty(' + i + ', 1)">+</button>' +
+          '</div>' +
+          '<button class="sidebar-item-remove" onclick="removeFromCart(' + i + ')">Remove</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  var subtotal = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
+  document.getElementById('drawer-subtotal').textContent = '$' + subtotal.toFixed(2);
+  var discRow = document.getElementById('drawer-discount-row');
+  if (appliedPromo) {
+    var disc = subtotal * appliedPromo.rate;
+    document.getElementById('drawer-discount').textContent = '-$' + disc.toFixed(2);
+    document.getElementById('drawer-total').textContent = '$' + (subtotal - disc).toFixed(2);
+    discRow.style.display = '';
+  } else {
+    discRow.style.display = 'none';
+    document.getElementById('drawer-total').textContent = '$' + subtotal.toFixed(2);
   }
 }
 
-function closeMobileSidebar() {
-  document.getElementById('pos-sidebar').classList.remove('open');
-  document.getElementById('sidebar-backdrop').classList.remove('active');
+function openMobileDrawer() {
+  renderMobileDrawer();
+  document.getElementById('mobile-drawer').classList.add('active');
+}
+
+function closeMobileDrawer() { document.getElementById('mobile-drawer').classList.remove('active'); }
+
+function applyPromoMobile() {
+  var input = document.getElementById('drawer-promo-input');
+  var msg = document.getElementById('drawer-promo-msg');
+  var code = input.value.trim().toUpperCase();
+  if (!code) { appliedPromo = null; msg.textContent = ''; msg.className = 'sidebar-promo-msg'; renderSidebar(); renderMobileDrawer(); return; }
+  if (PROMO_CODES[code] !== undefined) {
+    appliedPromo = { code: code, rate: PROMO_CODES[code] };
+    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
+    msg.className = 'sidebar-promo-msg ok';
+  } else {
+    appliedPromo = null;
+    msg.textContent = 'Invalid code';
+    msg.className = 'sidebar-promo-msg err';
+  }
+  renderSidebar();
+  renderMobileDrawer();
+}
+
+function clearOrderMobile() {
+  if (cart.length === 0) return;
+  if (!confirm('Clear entire order?')) return;
+  cart = [];
+  appliedPromo = null;
+  document.getElementById('drawer-promo-input').value = '';
+  document.getElementById('drawer-promo-msg').textContent = '';
+  document.getElementById('drawer-promo-msg').className = 'sidebar-promo-msg';
+  document.getElementById('drawer-customer-name').value = '';
+  document.getElementById('customer-name').value = '';
+  renderSidebar();
+  renderMobileDrawer();
+  closeMobileDrawer();
+}
+
+function placeOrderMobile() {
+  var nameInput = document.getElementById('drawer-customer-name');
+  var name = nameInput.value.trim();
+  if (!name) { alert('Enter a name for the order ticket'); return; }
+  document.getElementById('customer-name').value = name;
+  closeMobileDrawer();
+  placeOrder();
 }
 
 function renderSidebar() {
@@ -392,7 +489,7 @@ function renderSidebar() {
     discRow.style.display = 'none';
     document.getElementById('sidebar-total').textContent = '$' + subtotal.toFixed(2);
   }
-  updateMobileBar();
+  updateOrderBar();
 }
 
 function changeQty(i, delta) {
@@ -457,7 +554,7 @@ async function placeOrder() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 
   document.getElementById('order-confirmation').classList.add('active');
-  closeMobileSidebar();
+  closeMobileDrawer();
   document.getElementById('confirmation-text').textContent =
     'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Printing receipts... Hand customer copy to guest, kitchen copy to cook.';
   document.getElementById('btn-print-kitchen').style.display = 'none';
