@@ -519,11 +519,13 @@ body { display: flex; flex-direction: column; height: 100dvh; }
 
 /* Mobile */
 @media (max-width: 767px) {
-  .pos-workspace { display: block; }
+  .pos-workspace { display: block; height: 100%; }
   .pos-menu-panel {
     width: 100%;
+    height: 100%;
     overflow-y: auto;
     padding-bottom: 56px;
+    -webkit-overflow-scrolling: touch;
   }
   .pos-sidebar { display: none !important; }
   .order-bar { display: block; }
