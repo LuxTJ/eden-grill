@@ -419,6 +419,19 @@ body { display: flex; flex-direction: column; height: 100dvh; }
 }
 .confirm-panel h2 { margin-bottom: 0.5rem; }
 .confirm-panel p { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5; }
+.confirm-panel .pay-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  margin-bottom: 0.5rem;
+}
+.confirm-panel .pay-btn:last-child { margin-bottom: 0; background: #222; color: #fff; border: 1px solid #333; }
+.confirm-panel #btn-print-customer { background: var(--accent); color: #000; }
+.confirm-panel #btn-print-kitchen { background: var(--accent); color: #000; }
 
 /* Printer Settings */
 .printer-settings { padding: 1rem; }
