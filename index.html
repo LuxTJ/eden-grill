@@ -28,6 +28,8 @@
      .receipt .r-note { padding-left: 8px; font-size: 11px; font-style: italic; }
      .receipt .r-total { font-weight: 700; font-size: 14px; }
      .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 11px; }
+    .receipt .r-item-section { font-weight: 700; margin: 6px 0 2px; font-size: 12px; }
+    .receipt .r-item-line { padding-left: 8px; font-size: 11px; line-height: 1.4; }
    }
 </style>
 </head>
@@ -350,7 +352,7 @@ function openCart() {
           '<span class="cart-item-name">' + item.name + '</span>' +
           '<span class="cart-item-price">$' + (item.unitTotal * item.quantity).toFixed(2) + '</span>' +
         '</div>' +
-        (item.options.length ? '<div class="cart-item-opts">' + item.options.join(', ') + '</div>' : '') +
+        (item.options.length ? '<div class="cart-item-opts">' + formatItemOptionsHtml(item.options) + '</div>' : '') +
         (item.note ? '<div class="cart-item-note">' + item.note + '</div>' : '') +
         '<button class="cart-item-remove" onclick="removeFromCart(' + i + ')">Remove</button>' +
       '</div>';
@@ -453,6 +455,44 @@ async function placeOrder() {
 
 function closeConfirmation() { document.getElementById('order-confirmation').classList.remove('active'); }
 
+// Group item options: "For Two" combos split into Item 1 / Item 2 sections, regular items grouped by label
+function formatItemOptions(options) {
+  if (!options || options.length === 0) return [];
+  var hasSuffixes = options.some(function(opt) {
+    var ci = opt.indexOf(': '); return ci > 0 && /\s\d+$/.test(opt.substring(0, ci).trim());
+  });
+  if (hasSuffixes) {
+    var g = { '1': [], '2': [], 's': [] };
+    options.forEach(function(opt) {
+      var ci = opt.indexOf(': '); if (ci === -1) return;
+      var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
+      var m = label.match(/^(.+)\s(\d+)$/);
+      if (m && g[m[2]]) g[m[2]].push({ label: m[1], value: value });
+      else g.s.push({ label: label, value: value });
+    });
+    return [
+      { section: 'Item 1', items: g.s.concat(g['1']) },
+      { section: 'Item 2', items: g.s.concat(g['2']) }
+    ];
+  }
+  var grouped = {}, order = [];
+  options.forEach(function(opt) {
+    var ci = opt.indexOf(': '); if (ci === -1) return;
+    var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
+    if (!grouped[label]) { grouped[label] = []; order.push(label); }
+    grouped[label].push(value);
+  });
+  return [{ section: null, items: order.map(function(l) { return { label: l, value: grouped[l].join(', ') }; }) }];
+}
+function formatItemOptionsHtml(options) {
+  var s = formatItemOptions(options);
+  return s.map(function(sec) {
+    var h = sec.section ? '<div class="r-item-section">[ ' + sec.section + ' ]</div>' : '';
+    h += sec.items.map(function(it) { return '<div class="r-item-line">- ' + it.label + ': ' + it.value + '</div>'; }).join('');
+    return h;
+  }).join('');
+}
+
 function receiptHtml(order, copyLabel) {
   var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
   var itemsHtml = order.items.map(function(i) {
@@ -475,7 +515,7 @@ function receiptHtml(order, copyLabel) {
     }
     
     return '<div class="r-row"><span>' + displayText + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
-      (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '') +
+      (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
       (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
   }).join('');
   var sub = order.subtotal != null ? order.subtotal : order.total;

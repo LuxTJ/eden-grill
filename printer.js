@@ -54,6 +54,56 @@
 
   function fmtMoney(n) { return '$' + Number(n).toFixed(2); }
 
+  // Group item options: "For Two" combos split into Item 1 / Item 2 sections, regular items grouped by label
+  function formatItemOptions(options) {
+    if (!options || options.length === 0) return [];
+    var hasSuffixes = options.some(function(opt) {
+      var ci = opt.indexOf(': '); return ci > 0 && /\s\d+$/.test(opt.substring(0, ci).trim());
+    });
+    if (hasSuffixes) {
+      var g = { '1': [], '2': [], 's': [] };
+      options.forEach(function(opt) {
+        var ci = opt.indexOf(': '); if (ci === -1) return;
+        var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
+        var m = label.match(/^(.+)\s(\d+)$/);
+        if (m && g[m[2]]) g[m[2]].push({ label: m[1], value: value });
+        else g.s.push({ label: label, value: value });
+      });
+      return [
+        { section: 'Item 1', items: g.s.concat(g['1']) },
+        { section: 'Item 2', items: g.s.concat(g['2']) }
+      ];
+    }
+    var grouped = {}, order = [];
+    options.forEach(function(opt) {
+      var ci = opt.indexOf(': '); if (ci === -1) return;
+      var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
+      if (!grouped[label]) { grouped[label] = []; order.push(label); }
+      grouped[label].push(value);
+    });
+    return [{ section: null, items: order.map(function(l) { return { label: l, value: grouped[l].join(', ') }; }) }];
+  }
+
+  // Write formatted options to a Buffer for thermal printer (ESC/POS)
+  function writeOptionsToBuffer(b, options, indent) {
+    indent = indent || '  ';
+    var sections = formatItemOptions(options);
+    sections.forEach(function(sec) {
+      if (sec.section) b.line(indent + '[ ' + sec.section + ' ]');
+      sec.items.forEach(function(it) { b.line(indent + '- ' + it.label + ': ' + it.value); });
+    });
+  }
+
+  // Format options as HTML for browser print receipts
+  function formatItemOptionsHtml(options) {
+    var s = formatItemOptions(options);
+    return s.map(function(sec) {
+      var h = sec.section ? '<div class="r-item-section">[ ' + sec.section + ' ]</div>' : '';
+      h += sec.items.map(function(it) { return '<div class="r-item-line">- ' + it.label + ': ' + it.value + '</div>'; }).join('');
+      return h;
+    }).join('');
+  }
+
   // ----- Customer Receipt (detailed with pricing) -----
   function buildCustomerReceipt(order) {
     const b = Buffer();
@@ -74,16 +124,7 @@
 
     order.items.forEach(function (it) {
       b.row(it.quantity + 'x ' + it.name, fmtMoney(it.total));
-      if (it.options && it.options.length) {
-        const w = cols() - 2;
-        let lineBuf = '';
-        it.options.forEach(function (opt) {
-          const piece = (lineBuf ? ', ' : '') + opt;
-          if ((lineBuf + piece).length > w) { b.line('  ' + lineBuf); lineBuf = opt; }
-          else { lineBuf += piece; }
-        });
-        if (lineBuf) b.line('  ' + lineBuf);
-      }
+      if (it.options && it.options.length) writeOptionsToBuffer(b, it.options);
       if (it.note) { b.line('  -> ' + it.note); }
     });
     b.rule();
@@ -118,16 +159,7 @@
 
     order.items.forEach(function (it) {
       b.raw(CMD.BOLD_ON).line(it.quantity + 'x ' + it.name).raw(CMD.BOLD_OFF);
-      if (it.options && it.options.length) {
-        const w = cols() - 2;
-        let lineBuf = '';
-        it.options.forEach(function (opt) {
-          const piece = (lineBuf ? ', ' : '') + opt;
-          if ((lineBuf + piece).length > w) { b.line('  ' + lineBuf); lineBuf = opt; }
-          else { lineBuf += piece; }
-        });
-        if (lineBuf) b.line('  ' + lineBuf);
-      }
+      if (it.options && it.options.length) writeOptionsToBuffer(b, it.options);
       if (it.note) { b.line('  -> ' + it.note); }
       b.line('');
     });
@@ -305,7 +337,7 @@
     var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
     var items = order.items.map(function (i) {
       return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
-        (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '') +
+        (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
         (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
     }).join('');
     var sub = order.subtotal != null ? order.subtotal : order.total;
@@ -326,7 +358,7 @@
     var when = new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     var items = order.items.map(function (i) {
       return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span></div>' +
-        (i.options && i.options.length ? '<div class="r-opts">' + i.options.join(', ') + '</div>' : '') +
+        (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
         (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
     }).join('');
     return '<div class="receipt kitchen-ticket">' +
