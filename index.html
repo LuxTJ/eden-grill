@@ -762,6 +762,16 @@ function renderReports() {
   });
   var sorted = Object.keys(itemMap).sort(function(a, b) { return itemMap[b] - itemMap[a]; });
 
+  var promoMap = {};
+  all.forEach(function(o) {
+    if (!o.promoCode) return;
+    if (!promoMap[o.promoCode]) promoMap[o.promoCode] = { count: 0, revenue: 0, discount: 0 };
+    promoMap[o.promoCode].count++;
+    promoMap[o.promoCode].revenue += o.total || 0;
+    promoMap[o.promoCode].discount += o.discount || 0;
+  });
+  var promoSorted = Object.keys(promoMap).sort(function(a, b) { return promoMap[b].count - promoMap[a].count; });
+
   var html = '';
   var totalRevenue = all.reduce(function(s, o) { return s + (o.total || 0); }, 0);
   var todayRevenue = todayOrders.reduce(function(s, o) { return s + (o.total || 0); }, 0);
@@ -769,7 +779,18 @@ function renderReports() {
     '<div class="report-stat"><span class="report-stat-val">' + all.length + '</span><span class="report-stat-label">Total Orders</span></div>' +
     '<div class="report-stat"><span class="report-stat-val">$' + totalRevenue.toFixed(2) + '</span><span class="report-stat-label">Total Revenue</span></div>' +
     '<div class="report-stat"><span class="report-stat-val">' + todayOrders.length + '</span><span class="report-stat-label">Today Orders</span></div>' +
-    '<div class="report-stat"><span class="report-stat-val">$' + todayRevenue.toFixed(2) + '</span><span class="report-stat-label">Today Revenue</span></div></div>';
+    '<div class="report-stat"><span class="report-stat-val">$' + todayRevenue.toFixed(2) + '</span><span class="report-stat-label">Today Revenue</span></div>' +
+    '<div class="report-stat"><span class="report-stat-val">' + promoSorted.reduce(function(s, k) { return s + promoMap[k].count; }, 0) + '</span><span class="report-stat-label">Promos Used</span></div></div>';
+
+  if (promoSorted.length) {
+    html += '<div class="report-section"><h3>Promo Code Usage</h3>';
+    html += '<table class="report-table"><tr><th>Code</th><th>Used</th><th>Revenue</th><th>Discount</th></tr>';
+    promoSorted.forEach(function(code) {
+      var p = promoMap[code];
+      html += '<tr><td>' + code + '</td><td>' + p.count + '</td><td>$' + p.revenue.toFixed(2) + '</td><td>-$' + p.discount.toFixed(2) + '</td></tr>';
+    });
+    html += '</table></div>';
+  }
 
   html += '<div class="report-section"><h3>Items Sold (All Time)</h3>';
   html += '<table class="report-table"><tr><th>Item</th><th>Qty</th></tr>';
