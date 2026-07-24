@@ -435,7 +435,7 @@
         {
           "label": "Wing Sauce",
           "type": "radio",
-          "options": ["Plain", "Frank's Hot Buffalo", "Sweet Baby Ray's Honey BBQ", "Lemon Pepper", "Garlic Parm", "Ranch"]
+          "options": ["Plain", "Wet Sauce - Cajun Hot", "Wet Sauce - Caribbean Jerk", "Wet Sauce - BBQ", "Wet Sauce - Buffalo", "Dry Rub - Ranch", "Dry Rub - Lemon Pepper", "Dry Rub - Garlic Parm"]
         },
         {
           "label": "Dipping Sauce",
