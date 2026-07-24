@@ -17,7 +17,7 @@
         {
           "label": "Pick Your Sauce",
           "type": "checkbox",
-          "options": ["Mustard", "Mayonnaise", "Ketchup", "BBQ", "A1", "NO Sauce"]
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "BBQ", "A1", "NO Sauce"]
         },
         {
           "label": "Add On's",
@@ -47,7 +47,7 @@
         {
           "label": "Pick Your Sauce",
           "type": "checkbox",
-          "options": ["Mustard", "Mayonnaise", "Ketchup", "BBQ", "A1", "NO Sauce"]
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "BBQ", "A1", "NO Sauce"]
         },
         {
           "label": "Add Ons",
@@ -104,7 +104,7 @@
         {
           "label": "Pick Your Sauce",
           "type": "checkbox",
-          "options": ["Mustard", "Mayonnaise", "Ketchup", "NO Sauce"]
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "NO Sauce"]
         },
         {
           "label": "Add On's",
@@ -164,7 +164,7 @@
         {
           "label": "Pick Your Sauce",
           "type": "checkbox",
-          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "NO Sauce"]
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "Ranch", "NO Sauce"]
         },
         {
           "label": "Extra Add Ons",
@@ -329,7 +329,7 @@
         {
           "label": "Pick Style/Flavor",
           "type": "radio",
-          "options": ["Plain", "Wet Sauce - Hot", "Wet Sauce - BBQ", "Wet Sauce - Buffalo", "Dry Rub - Ranch", "Dry Rub - Lemon Pepper", "Dry Rub - Garlic Parm"]
+          "options": ["Plain", "Wet Sauce - Cajun Hot", "Wet Sauce - Caribbean Jerk", "Wet Sauce - BBQ", "Wet Sauce - Buffalo", "Dry Rub - Ranch", "Dry Rub - Lemon Pepper", "Dry Rub - Garlic Parm"]
         },
         {
           "label": "Pick Your Sauce",
@@ -567,6 +567,11 @@
           "label": "Pick Toppings",
           "type": "checkbox",
           "options": ["No Toppings", "Lettuce", "Tomato", "Pickle", "Raw Onions", "Grilled Onions", "Grilled Mushrooms", "Jalapenos"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "NO Sauce"]
         },
         {
           "label": "Extra Add On's",
