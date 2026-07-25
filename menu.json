@@ -42,7 +42,7 @@
         {
           "label": "Toppings",
           "type": "checkbox",
-          "options": ["No Onion"]
+          "options": ["No Onion", "No Grilled Onions"]
         },
         {
           "label": "Pick Your Sauce",
@@ -112,7 +112,8 @@
           "options": [
             { "name": "American Cheese", "price": 1 },
             { "name": "Provolone Cheese", "price": 1 },
-            { "name": "Fried Egg", "price": 1 }
+            { "name": "Fried Egg", "price": 1 },
+            { "name": "Extra Bacon", "price": 2 }
           ]
         }
       ]
@@ -167,12 +168,14 @@
           "options": ["Mustard", "Mayonnaise", "Ketchup", "Thousand Island", "Ranch", "NO Sauce"]
         },
         {
-          "label": "Extra Add Ons",
+          "label": "Extra Add On's",
           "type": "checkbox",
           "options": [
             { "name": "Bacon", "price": 2 },
-            { "name": "Extra Ham", "price": 2 },
-            { "name": "Extra Turkey", "price": 2 }
+            { "name": "Sausage", "price": 2 },
+            { "name": "Chicken", "price": 2 },
+            { "name": "Potato", "price": 0 },
+            { "name": "Egg", "price": 0 }
           ]
         }
       ]
@@ -512,9 +515,9 @@
           "options": ["Ketchup"]
         },
         {
-          "label": "Drink Choice",
+          "label": "Bread/Tortilla Choice",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper", "Water"]
+          "options": ["Sliced Bread", "Flour Tortilla"]
         },
         {
           "label": "Pick Toppings",
@@ -579,7 +582,8 @@
           "options": [
             { "name": "American Cheese", "price": 1 },
             { "name": "Provolone Cheese", "price": 1 },
-            { "name": "Fried Egg", "price": 1 }
+            { "name": "Fried Egg", "price": 1 },
+            { "name": "Extra Bacon", "price": 2 }
           ]
         }
       ]
@@ -612,7 +616,7 @@
         {
           "label": "Pick Your Dressing",
           "type": "radio",
-          "options": ["Ranch", "Thousand Island", "Vinaigrette", "Italian"]
+          "options": ["Ranch", "Thousand Island", "Vinaigrette", "Italian", "Red Salsa", "Green Salsa"]
         }
       ]
     },
