@@ -99,7 +99,7 @@
         {
           "label": "Pick Toppings",
           "type": "checkbox",
-          "options": ["No Toppings", "Lettuce", "Tomato", "Pickle", "Raw Onions", "Grilled Onions", "Jalapenos"]
+          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers", "Potato", "Egg"]
         },
         {
           "label": "Pick Your Sauce",
@@ -173,9 +173,7 @@
           "options": [
             { "name": "Bacon", "price": 2 },
             { "name": "Sausage", "price": 2 },
-            { "name": "Chicken", "price": 2 },
-            { "name": "Potato", "price": 0 },
-            { "name": "Egg", "price": 0 }
+            { "name": "Chicken", "price": 2 }
           ]
         }
       ]
