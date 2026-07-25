@@ -149,7 +149,7 @@
         {
           "label": "Meat Options",
           "type": "checkbox",
-          "options": ["Ham", "Turkey", "No Meat"]
+          "options": ["Ham", "Turkey", "No Ham", "No Turkey"]
         },
         {
           "label": "Pick Your Cheese",
