@@ -99,7 +99,7 @@
         {
           "label": "Pick Toppings",
           "type": "checkbox",
-          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers", "Potato", "Egg"]
+          "options": ["No Toppings", "Lettuce", "Tomato", "Pickle", "Raw Onions", "Jalapenos"]
         },
         {
           "label": "Pick Your Sauce",
@@ -271,7 +271,7 @@
         {
           "label": "Pick Toppings",
           "type": "checkbox",
-          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers"]
+          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers", "Potato", "Egg"]
         },
         {
           "label": "Pick Sauce",
