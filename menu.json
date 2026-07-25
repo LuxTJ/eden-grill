@@ -148,8 +148,8 @@
         },
         {
           "label": "Meat Options",
-          "type": "radio",
-          "options": ["No Ham", "No Turkey"]
+          "type": "checkbox",
+          "options": ["Ham", "Turkey", "No Meat"]
         },
         {
           "label": "Pick Your Cheese",
