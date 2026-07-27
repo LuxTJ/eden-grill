@@ -18,14 +18,18 @@ var SECTIONS = [
   { key: 'onFry', label: 'On Fry' },
   { key: 'combos', label: 'Combos', note: 'Served with your choice of side and a drink' },
   { key: 'drinks', label: 'Drinks & Snacks' },
-  /* fullWidth: breaks out of the two-column flow and runs across the page */
-  { key: 'lateNight', label: 'Late Night', hours: '9pm – 1am', fullWidth: true }
+  { key: 'lateNight', label: 'Late Night', hours: '9pm – 1am' }
 ];
 
 /* Groups that only exist to take an order, not to describe the dish.
    Sides and drinks are skipped on combos because the section note covers them. */
 var SKIP_GROUP = /^(toppings|pick toppings|exclusions|fries add on's|dipping sauce|choose your veggies|side choice|drink|drink choice)$/i;
 var SAUCE_GROUP = /sauce/i;
+/* Labels that add nothing next to the item name — print the choices bare. */
+var BARE_LABEL = /^(energy drink|drink|chips|candy)$/i;
+/* Wing flavors carry their prep in the option name; split them onto their own lines. */
+var WET = /^wet sauce\s*-\s*/i;
+var DRY = /^dry rub\s*-\s*/i;
 var isNegative = function (name) { return /^(no\b|none\b)/i.test(name); };
 var optName = function (o) { return typeof o === 'object' ? o.name : o; };
 var optPrice = function (o) { return typeof o === 'object' ? o.price : 0; };
@@ -44,10 +48,13 @@ function groupNoun(label) {
     .trim();
 }
 
-/* One line describing the real choices, e.g. "Flavor: Plain, Cajun Hot, BBQ" */
+/* One line per choice, e.g. "Flavor: Plain, Cajun Hot, BBQ" — each starts at the
+   left edge so the bold labels line up down the item. Sauces and dressing go last. */
 function describe(item) {
   var seen = {};
   var parts = [];
+  var hasDressing = false;
+  var hasCheese = false;
 
   (item.optionGroups || []).forEach(function (g) {
     var label = baseLabel(g.label);
@@ -56,11 +63,31 @@ function describe(item) {
     if (g.type !== 'radio') return;
     seen[noun] = true;
 
-    var names = g.options.map(optName)
-      .filter(function (n) { return !isNegative(n); })
-      /* "Wet Sauce - Cajun Hot" reads fine on a POS button, not on a menu. */
-      .map(function (n) { return n.replace(/^(wet sauce|dry rub)\s*-\s*/i, ''); });
+    var names = g.options.map(optName).filter(function (n) { return !isNegative(n); });
     if (names.length < 2) return;
+
+    /* Wings: keep wet vs dry visible, one line each, instead of one flat list. */
+    var wet = names.filter(function (n) { return WET.test(n); }).map(function (n) { return n.replace(WET, ''); });
+    var dry = names.filter(function (n) { return DRY.test(n); }).map(function (n) { return n.replace(DRY, ''); });
+    if (wet.length || dry.length) {
+      var plain = names.filter(function (n) { return !WET.test(n) && !DRY.test(n); });
+      if (wet.length) parts.push('<b>Wet Sauce:</b> ' + esc(wet.join(', ')));
+      if (dry.length) parts.push('<b>Dry Rub:</b> ' + esc(dry.join(', ')));
+      /* The lone "Plain" option means no sauce at all — say so rather than
+         labelling a one-item list "Style/Flavor: Plain". */
+      if (plain.length === 1 && /^plain$/i.test(plain[0])) parts.push('<b>Plain:</b> no sauce');
+      else if (plain.length) parts.push('<b>' + esc(noun) + ':</b> ' + esc(plain.join(', ')));
+      return;
+    }
+    /* Dressings and cheeses, like sauces, are listed in full in the band at the bottom. */
+    if (/dressing/i.test(label)) { hasDressing = true; return; }
+    if (/cheese/i.test(label)) { hasCheese = true; return; }
+    /* "Crinkle Fries or Tots" already names its own choices — don't repeat them. */
+    var inTitle = names.every(function (n) {
+      return item.name.toLowerCase().indexOf(n.toLowerCase()) >= 0;
+    });
+    if (inTitle) return;
+    if (BARE_LABEL.test(noun)) { parts.push(esc(names.join(', '))); return; }
     parts.push('<b>' + esc(noun) + ':</b> ' + esc(names.join(', ')));
   });
 
@@ -68,9 +95,11 @@ function describe(item) {
   var hasSauce = (item.optionGroups || []).some(function (g) {
     return g.type === 'checkbox' && SAUCE_GROUP.test(g.label);
   });
+  if (hasCheese) parts.push('<b>Cheese:</b> your choice');
   if (hasSauce) parts.push('<b>Sauces:</b> your choice');
+  if (hasDressing) parts.push('<b>Dressing:</b> your choice');
 
-  return parts.join(' &nbsp;•&nbsp; ');
+  return parts;
 }
 
 /* Paid extras, deduped across the numbered per-person copies. */
@@ -88,17 +117,25 @@ function addOns(item) {
   return out.join(' &nbsp;•&nbsp; ');
 }
 
+/* "(For One)" is kept whole (never split across lines) and set a little smaller,
+   so short names hold it on the same line and long ones drop it to its own. */
+function itemName(name) {
+  return esc(name).replace(/\s+\((For (?:One|Two))\)/i, function (_, inner) {
+    return ' <span class="serves">(' + inner + ')</span>';
+  });
+}
+
 function renderItem(item) {
   var price = item.price ? '$' + item.price : '';
   var desc = describe(item);
   var extras = addOns(item);
   return '<li class="item">' +
     '<div class="item-head">' +
-      '<span class="item-name">' + esc(item.name) + '</span>' +
+      '<span class="item-name">' + itemName(item.name) + '</span>' +
       '<span class="leader"></span>' +
       '<span class="item-price">' + price + '</span>' +
     '</div>' +
-    (desc ? '<div class="item-desc">' + desc + '</div>' : '') +
+    desc.map(function (line) { return '<div class="item-desc">' + line + '</div>'; }).join('') +
     (extras ? '<div class="item-extras">Add ' + extras + '</div>' : '') +
   '</li>';
 }
@@ -107,7 +144,7 @@ function renderItem(item) {
    Wing flavors are skipped (they print under Chicken Wings), and anything that
    also appears in a toppings group — Pico, Jalapenos — is a topping, not a sauce. */
 function condiments() {
-  var sauces = [], dressings = [], toppings = {};
+  var sauces = [], dressings = [], cheeses = [], toppings = {};
 
   function eachGroup(fn) {
     Object.keys(menu).forEach(function (key) {
@@ -126,6 +163,8 @@ function condiments() {
     var names = g.options.map(optName).filter(function (n) { return !isNegative(n); });
     if (/dressing/i.test(g.label)) {
       names.forEach(function (n) { if (dressings.indexOf(n) < 0) dressings.push(n); });
+    } else if (/cheese/i.test(g.label)) {
+      names.forEach(function (n) { if (cheeses.indexOf(n) < 0) cheeses.push(n); });
     } else if (/sauce/i.test(g.label) && !/wing/i.test(g.label)) {
       names.forEach(function (n) {
         if (!toppings[n] && sauces.indexOf(n) < 0) sauces.push(n);
@@ -134,6 +173,8 @@ function condiments() {
   });
 
   return '<section class="condiments">' +
+    '<div class="condiment-row"><span class="condiment-label">Cheese</span>' +
+      esc(cheeses.join('  •  ')) + '</div>' +
     '<div class="condiment-row"><span class="condiment-label">Sauces</span>' +
       esc(sauces.join('  •  ')) + '</div>' +
     '<div class="condiment-row"><span class="condiment-label">Dressings</span>' +
@@ -141,10 +182,26 @@ function condiments() {
   '</section>';
 }
 
+/* Grid rows are as tall as their tallest cell, so a short item sitting beside a
+   wordy one wastes the difference. Ordering each section tallest-first pushes the
+   short entries into the final row, where they pad nothing. Menu order in the POS
+   is untouched — this is a print-layout concern only. */
+var CHARS_PER_LINE = 26;      /* rough fit for a 127px cell at 7.5pt */
+function estimateLines(item) {
+  var lines = Math.ceil(item.name.length / 17);            /* name is bold, 9.5pt */
+  describe(item).forEach(function (d) {
+    lines += Math.ceil(d.replace(/<[^>]+>/g, '').length / CHARS_PER_LINE);
+  });
+  var extras = addOns(item).replace(/<[^>]+>|&nbsp;/g, '');
+  if (extras) lines += Math.ceil((extras.length + 4) / CHARS_PER_LINE);
+  return lines;
+}
+
 function renderSection(sec) {
-  var items = menu[sec.key] || [];
+  var items = (menu[sec.key] || []).slice()
+    .sort(function (a, b) { return estimateLines(b) - estimateLines(a); });
   if (!items.length) return '';
-  return '<section class="section' + (sec.fullWidth ? ' section-wide' : '') + '">' +
+  return '<section class="section">' +
     '<h2>' + esc(sec.label) +
       (sec.hours ? '<span class="section-hours">' + esc(sec.hours) + '</span>' : '') +
     '</h2>' +
@@ -165,33 +222,36 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  @page { size: letter portrait; margin: 0.5in; }\n' +
 '  * { box-sizing: border-box; }\n' +
 '  body { margin: 0; padding: 0.5in; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;\n' +
-'         color: #111; background: #fff; font-size: 10.5pt; line-height: 1.3; }\n' +
-'  header { text-align: center; border-bottom: 3px double #111; padding-bottom: 10px; margin-bottom: 16px; }\n' +
-'  header img { max-height: 90px; margin-bottom: 6px; }\n' +
-'  header h1 { font-size: 26pt; letter-spacing: 3px; margin: 0; text-transform: uppercase; }\n' +
-'  header .tagline { font-size: 9pt; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-top: 4px; }\n' +
-'  .columns { column-count: 2; column-gap: 28px; }\n' +
-'  .section { break-inside: avoid-column; margin-bottom: 16px; }\n' +
-'  .section h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 2px;\n' +
+'         color: #111; background: #fff; font-size: 9pt; line-height: 1.25; }\n' +
+/* Logo sits beside the title rather than above it — the stacked version cost
+   roughly an inch and a half of the first page. */
+'  header { display: flex; align-items: center; justify-content: center; gap: 14px;\n' +
+'           border-bottom: 3px double #111; padding-bottom: 6px; margin-bottom: 10px; }\n' +
+'  header img { max-height: 40px; }\n' +
+'  header > div { text-align: center; }\n' +
+'  header h1 { font-size: 19pt; letter-spacing: 3px; margin: 0; text-transform: uppercase; }\n' +
+'  header .tagline { font-size: 8pt; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-top: 1px; }\n' +
+'  .section { break-inside: avoid; margin-bottom: 13px; }\n' +
+'  .section h2 { font-size: 11pt; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 2px;\n' +
 '                border-bottom: 1.5px solid #111; padding-bottom: 3px;\n' +
 '                display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }\n' +
 '  .section-hours { font-size: 8.5pt; letter-spacing: 1px; font-weight: 400; text-transform: none; color: #555; }\n' +
 '  .section-note { font-size: 8pt; font-style: italic; color: #555; margin: 3px 0 6px; }\n' +
-'  .items { list-style: none; margin: 6px 0 0; padding: 0; }\n' +
-'  .item { break-inside: avoid; margin-bottom: 7px; }\n' +
+/* Every section runs the full page width, items side by side. */
+'  .items { list-style: none; margin: 6px 0 0; padding: 0;\n' +
+'           display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 22px; }\n' +
+'  .item { break-inside: avoid; margin-bottom: 6px; }\n' +
 '  .item-head { display: flex; align-items: baseline; gap: 4px; }\n' +
 '  .item-name { font-weight: 700; }\n' +
+'  .serves { font-size: 7pt; font-weight: 400; white-space: nowrap; }\n' +
 '  .leader { flex: 1; border-bottom: 1px dotted #999; transform: translateY(-3px); }\n' +
 '  .item-price { font-weight: 700; font-variant-numeric: tabular-nums; }\n' +
-'  .item-desc { font-size: 8pt; color: #444; margin-top: 1px; }\n' +
-'  .item-extras { font-size: 8pt; color: #666; font-style: italic; margin-top: 1px; }\n' +
-/* Runs the full page width below the two-column flow, items side by side. */
-'  .section-wide { margin-top: 14px; }\n' +
-'  .section-wide .items { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 24px; }\n' +
-'  .condiments { margin-top: 14px; border: 1.5px solid #111; border-radius: 4px; padding: 8px 10px; }\n' +
-'  .condiment-row { font-size: 8.5pt; line-height: 1.5; }\n' +
-'  .condiment-row + .condiment-row { margin-top: 4px; padding-top: 4px; border-top: 1px dotted #999; }\n' +
-'  .condiment-label { font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 8pt; }\n' +
+'  .item-desc { font-size: 7pt; color: #444; margin-top: 1px; }\n' +
+'  .item-extras { font-size: 7pt; color: #666; font-style: italic; margin-top: 1px; }\n' +
+'  .condiments { margin-top: 9px; border: 1px solid #111; border-radius: 4px; padding: 5px 8px; }\n' +
+'  .condiment-row { font-size: 7.5pt; line-height: 1.32; }\n' +
+'  .condiment-row + .condiment-row { margin-top: 3px; padding-top: 3px; border-top: 1px dotted #999; }\n' +
+'  .condiment-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 7pt; }\n' +
 '  .condiment-label::after { content: ":"; margin-right: 5px; }\n' +
 '  footer { margin-top: 12px; border-top: 3px double #111; padding-top: 8px;\n' +
 '           text-align: center; font-size: 8.5pt; color: #555; }\n' +
@@ -205,15 +265,14 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '<script>if (window.top !== window.self) document.getElementById("print-bar").style.display = "none";<\/script>\n' +
 '<header>\n' +
 (logo ? '  <img src="' + logo + '" alt="Eden Grill">\n' : '') +
-'  <h1>Eden Grill OKC</h1>\n' +
-'  <div class="tagline">Kitchen &amp; Late Night</div>\n' +
+'  <div>\n' +
+'    <h1>Eden Grill OKC</h1>\n' +
+'    <div class="tagline">Kitchen &amp; Late Night</div>\n' +
+'  </div>\n' +
 '</header>\n' +
-'<div class="columns">\n' +
-SECTIONS.filter(function (s) { return !s.fullWidth; }).map(renderSection).join('\n') +
-'\n</div>\n' +
-SECTIONS.filter(function (s) { return s.fullWidth; }).map(renderSection).join('\n') + '\n' +
+SECTIONS.map(renderSection).join('\n') + '\n' +
 condiments() +
-'<footer>All items made to order &nbsp;•&nbsp; Ask your server about daily specials</footer>\n' +
+'<footer>All items made to order</footer>\n' +
 '</body>\n</html>\n';
 
 fs.writeFileSync(path.join(ROOT, 'print-menu.html'), html);

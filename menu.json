@@ -181,24 +181,6 @@
   ],
   "onTortilla": [
     {
-      "name": "Nachos",
-      "price": 8,
-      "optionGroups": [
-        {
-          "label": "Pick Toppings",
-          "type": "checkbox",
-          "options": ["No Toppings", "Pico", "Jalapenos"]
-        },
-        {
-          "label": "Add On's",
-          "type": "checkbox",
-          "options": [
-            { "name": "Extra Cheese", "price": 1 }
-          ]
-        }
-      ]
-    },
-    {
       "name": "Street Taco",
       "price": 6,
       "optionGroups": [
@@ -320,6 +302,24 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Nachos",
+      "price": 8,
+      "optionGroups": [
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["No Toppings", "Pico", "Jalapenos"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Extra Cheese", "price": 1 }
+          ]
+        }
+      ]
     }
   ],
   "onFry": [
@@ -345,17 +345,6 @@
             "Carrots",
             { "name": "Cheese Sauce", "price": 1 }
           ]
-        }
-      ]
-    },
-    {
-      "name": "Cheese Sticks (5)",
-      "price": 6,
-      "optionGroups": [
-        {
-          "label": "Pick Your Sauce",
-          "type": "radio",
-          "options": ["Ranch", "Marinara", "No Sauce"]
         }
       ]
     },
@@ -409,6 +398,17 @@
             { "name": "Extra Meat", "price": 2 },
             { "name": "Extra Cheese", "price": 1 }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Cheese Sticks (5)",
+      "price": 6,
+      "optionGroups": [
+        {
+          "label": "Pick Your Sauce",
+          "type": "radio",
+          "options": ["Ranch", "Marinara", "No Sauce"]
         }
       ]
     }
@@ -780,22 +780,6 @@
   ],
   "drinks": [
     {
-      "name": "Can Drink",
-      "price": 2,
-      "optionGroups": [
-        {
-          "label": "Pick Your Drink",
-          "type": "radio",
-          "options": ["Coke", "Diet Coke", "Sprite", "Sprite Zero", "Dr Pepper", "Dr Pepper Zero"]
-        }
-      ]
-    },
-    {
-      "name": "Bottle of Water",
-      "price": 2,
-      "optionGroups": []
-    },
-    {
       "name": "Monster or Red Bull",
       "price": 5,
       "optionGroups": [
@@ -827,6 +811,22 @@
           "options": ["Hershey's with Almonds", "Hershey's Bar", "Kit Kat", "Peanut M&Ms", "Chocolate M&Ms", "Milky Way", "Snickers", "Reese's", "Twix"]
         }
       ]
+    },
+    {
+      "name": "Can Drink",
+      "price": 2,
+      "optionGroups": [
+        {
+          "label": "Pick Your Drink",
+          "type": "radio",
+          "options": ["Coke", "Diet Coke", "Sprite", "Sprite Zero", "Dr Pepper", "Dr Pepper Zero"]
+        }
+      ]
+    },
+    {
+      "name": "Bottle of Water",
+      "price": 2,
+      "optionGroups": []
     }
   ],
   "lateNight": [
