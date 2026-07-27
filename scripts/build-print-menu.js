@@ -269,8 +269,7 @@ function buildHtml(qrSvg) {
 '  .qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);\n' +
 '             width: 20%; background: #fff; padding: 1.5px; border-radius: 1px; }\n' +
 '  .qr-caption { font-size: 7pt; letter-spacing: 0.5px; text-transform: uppercase; margin: 2px 0 4px; }\n' +
-/* On a phone the print grid is unreadable — one column, larger type, and the
-   QR is pointless on the page it links to. */
+/* On a phone the print grid is unreadable — one column and larger type. */
 '  @media screen and (max-width: 700px) {\n' +
 '    body { padding: 16px; font-size: 12pt; }\n' +
 '    .items { grid-template-columns: 1fr; gap: 0; }\n' +
@@ -279,7 +278,10 @@ function buildHtml(qrSvg) {
 '    .section h2 { font-size: 14pt; }\n' +
 '    .condiment-row, .condiment-label { font-size: 10pt; }\n' +
 '    header h1 { font-size: 22pt; }\n' +
-'    .qr, .qr-caption { display: none; }\n' +
+/* Kept visible on phones and enlarged so it can be screenshotted and shared. */
+'    .qr svg { width: 190px; height: 190px; }\n' +
+'    .qr-logo { padding: 4px; }\n' +
+'    .qr-caption { font-size: 9pt; margin: 6px 0 8px; }\n' +
 '  }\n' +
 '  @media print { body { padding: 0; } .noprint { display: none; } }\n' +
 '  .noprint { text-align: center; margin-bottom: 14px; }\n' +
