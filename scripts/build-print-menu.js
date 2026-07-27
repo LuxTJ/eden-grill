@@ -278,10 +278,10 @@ function buildHtml(qrSvg) {
 '    .section h2 { font-size: 14pt; }\n' +
 '    .condiment-row, .condiment-label { font-size: 10pt; }\n' +
 '    header h1 { font-size: 22pt; }\n' +
-/* Kept visible on phones and enlarged so it can be screenshotted and shared. */
-'    .qr svg { width: 190px; height: 190px; }\n' +
-'    .qr-logo { padding: 4px; }\n' +
-'    .qr-caption { font-size: 9pt; margin: 6px 0 8px; }\n' +
+/* Stays visible on phones, just small enough not to dominate the footer. */
+'    .qr svg { width: 110px; height: 110px; }\n' +
+'    .qr-logo { padding: 2.5px; }\n' +
+'    .qr-caption { font-size: 8pt; margin: 4px 0 6px; }\n' +
 '  }\n' +
 '  @media print { body { padding: 0; } .noprint { display: none; } }\n' +
 '  .noprint { text-align: center; margin-bottom: 14px; }\n' +
