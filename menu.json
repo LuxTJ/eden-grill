@@ -42,7 +42,7 @@
         {
           "label": "Toppings",
           "type": "checkbox",
-          "options": ["No Onion", "No Grilled Onions"]
+          "options": ["No Grilled Onions"]
         },
         {
           "label": "Pick Your Sauce",
@@ -260,7 +260,7 @@
       ]
     },
     {
-      "name": "Breakfast Tacos",
+      "name": "Breakfast Tacos with Egg and Cheese",
       "price": 5,
       "optionGroups": [
         {
@@ -448,7 +448,8 @@
           "type": "checkbox",
           "options": [
             "Celery",
-            "Carrots"
+            "Carrots",
+            { "name": "Extra Cheese", "price": 2 }
           ]
         }
       ]
@@ -830,7 +831,7 @@
   ],
   "lateNight": [
     {
-      "name": "Breakfast Tacos",
+      "name": "Breakfast Tacos with Egg and Cheese",
       "price": 5,
       "optionGroups": [
         {
