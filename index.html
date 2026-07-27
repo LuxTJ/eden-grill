@@ -286,9 +286,11 @@ function openModifier(key, idx) {
         var inputName = isRadio ? 'mod-g' + gi : 'mod-g' + gi + '-' + oi;
         return '<label class="mod-option">' +
           '<input type="' + (isRadio ? 'radio' : 'checkbox') + '" name="' + inputName + '" value="' + name + '"' +
+          ' data-group="' + gi + '"' +
+          (isNegativeOption(name) ? ' data-neg="1"' : '') +
           (price ? ' data-price="' + price + '"' : '') +
           (isRadio && oi === 0 ? ' checked' : '') +
-          ' onchange="updateModTotal()">' +
+          ' onchange="onModOptionChange(this)">' +
           '<span class="mod-option-text">' + name + (price > 0 ? ' <em>(+$' + price + ')</em>' : '') + '</span>' +
         '</label>';
       }).join('');
@@ -310,6 +312,23 @@ function closeModifiers() { document.getElementById('modifier-modal').classList.
 function modQty(delta) {
   modQtyVal = Math.max(1, modQtyVal + delta);
   document.getElementById('mod-qty').textContent = modQtyVal;
+  updateModTotal();
+}
+
+/* "No cheese", "NO Sauce", "None" etc. — an opt-out rather than something added */
+function isNegativeOption(name) { return /^(no\b|none\b)/i.test(name); }
+
+/* Opt-outs and real selections cancel each other out, so a ticket can't read
+   "No Toppings, Lettuce". Two opt-outs can coexist ("No Potato" + "No Cheese"). */
+function onModOptionChange(el) {
+  if (el.type === 'checkbox' && el.checked) {
+    var isNeg = el.dataset.neg === '1';
+    document.getElementById('modifier-body')
+      .querySelectorAll('input[type="checkbox"][data-group="' + el.dataset.group + '"]')
+      .forEach(function(other) {
+        if (other !== el && other.checked && (other.dataset.neg === '1') !== isNeg) other.checked = false;
+      });
+  }
   updateModTotal();
 }
 
