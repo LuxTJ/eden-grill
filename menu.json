@@ -149,7 +149,7 @@
         },
         {
           "label": "Meat Options",
-          "type": "checkbox",
+          "type": "radio",
           "options": ["Ham and Turkey", "No Ham", "No Turkey"]
         },
         {
