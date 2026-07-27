@@ -102,6 +102,44 @@ function renderItem(item) {
   '</li>';
 }
 
+/* Every sauce / dressing offered anywhere, for the reference band at the bottom.
+   Wing flavors are skipped (they print under Chicken Wings), and anything that
+   also appears in a toppings group — Pico, Jalapenos — is a topping, not a sauce. */
+function condiments() {
+  var sauces = [], dressings = [], toppings = {};
+
+  function eachGroup(fn) {
+    Object.keys(menu).forEach(function (key) {
+      (menu[key] || []).forEach(function (item) {
+        (item.optionGroups || []).forEach(fn);
+      });
+    });
+  }
+
+  eachGroup(function (g) {
+    if (!/topping/i.test(g.label) || /sauce/i.test(g.label)) return;
+    g.options.map(optName).forEach(function (n) { toppings[n] = true; });
+  });
+
+  eachGroup(function (g) {
+    var names = g.options.map(optName).filter(function (n) { return !isNegative(n); });
+    if (/dressing/i.test(g.label)) {
+      names.forEach(function (n) { if (dressings.indexOf(n) < 0) dressings.push(n); });
+    } else if (/sauce/i.test(g.label) && !/wing/i.test(g.label)) {
+      names.forEach(function (n) {
+        if (!toppings[n] && sauces.indexOf(n) < 0) sauces.push(n);
+      });
+    }
+  });
+
+  return '<section class="condiments">' +
+    '<div class="condiment-row"><span class="condiment-label">Sauces</span>' +
+      esc(sauces.join('  •  ')) + '</div>' +
+    '<div class="condiment-row"><span class="condiment-label">Dressings</span>' +
+      esc(dressings.join('  •  ')) + '</div>' +
+  '</section>';
+}
+
 function renderSection(sec) {
   var items = menu[sec.key] || [];
   if (!items.length) return '';
@@ -146,7 +184,12 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  .item-price { font-weight: 700; font-variant-numeric: tabular-nums; }\n' +
 '  .item-desc { font-size: 8pt; color: #444; margin-top: 1px; }\n' +
 '  .item-extras { font-size: 8pt; color: #666; font-style: italic; margin-top: 1px; }\n' +
-'  footer { margin-top: 18px; border-top: 3px double #111; padding-top: 8px;\n' +
+'  .condiments { margin-top: 14px; border: 1.5px solid #111; border-radius: 4px; padding: 8px 10px; }\n' +
+'  .condiment-row { font-size: 8.5pt; line-height: 1.5; }\n' +
+'  .condiment-row + .condiment-row { margin-top: 4px; padding-top: 4px; border-top: 1px dotted #999; }\n' +
+'  .condiment-label { display: inline-block; min-width: 74px; font-weight: 700; text-transform: uppercase;\n' +
+'                     letter-spacing: 1px; font-size: 8pt; }\n' +
+'  footer { margin-top: 12px; border-top: 3px double #111; padding-top: 8px;\n' +
 '           text-align: center; font-size: 8.5pt; color: #555; }\n' +
 '  @media print { body { padding: 0; } .noprint { display: none; } }\n' +
 '  .noprint { text-align: center; margin-bottom: 14px; }\n' +
@@ -164,6 +207,7 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '<div class="columns">\n' +
 SECTIONS.map(renderSection).join('\n') +
 '\n</div>\n' +
+condiments() +
 '<footer>All items made to order &nbsp;•&nbsp; Ask your server about daily specials</footer>\n' +
 '</body>\n</html>\n';
 
