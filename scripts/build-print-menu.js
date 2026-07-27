@@ -149,7 +149,9 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  .noprint button { font: inherit; padding: 8px 20px; border: 1px solid #111; background: #111;\n' +
 '                    color: #fff; border-radius: 4px; cursor: pointer; }\n' +
 '</style>\n</head>\n<body>\n' +
-'<div class="noprint"><button onclick="window.print()">Print this menu</button></div>\n' +
+'<div class="noprint" id="print-bar"><button onclick="window.print()">Print this menu</button></div>\n' +
+/* Inside the POS modal the panel has its own Print button, so hide this one. */
+'<script>if (window.top !== window.self) document.getElementById("print-bar").style.display = "none";<\/script>\n' +
 '<header>\n' +
 (logo ? '  <img src="' + logo + '" alt="Eden Grill">\n' : '') +
 '  <h1>Eden Grill OKC</h1>\n' +

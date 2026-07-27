@@ -52,6 +52,9 @@
     <button class="pos-btn pos-btn-ghost" onclick="openReports()" title="Reports">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
     </button>
+    <button class="pos-btn pos-btn-ghost" onclick="openPaperMenu()" title="Paper Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg>
+    </button>
     <div class="pos-time" id="pos-time"></div>
   </div>
 </header>
@@ -162,6 +165,20 @@
       </div>
     </div>
     <div class="report-body" id="report-body"></div>
+  </div>
+</div>
+
+<!-- Paper Menu Modal -->
+<div class="modal-overlay" id="paper-menu-modal">
+  <div class="modifier-panel paper-menu-panel">
+    <div class="modifier-header">
+      <h2>Paper Menu</h2>
+      <div class="report-header-actions">
+        <button class="pos-btn pos-btn-ghost" onclick="printPaperMenu()">Print</button>
+        <button class="modal-close" onclick="closePaperMenu()">✕</button>
+      </div>
+    </div>
+    <iframe id="paper-menu-frame" class="paper-menu-frame" title="Printable menu"></iframe>
   </div>
 </div>
 
@@ -789,6 +806,26 @@ function openReports() {
   renderReports();
 }
 function closeReports() { document.getElementById('reports-modal').classList.remove('active'); }
+
+/* ── Paper Menu ── */
+/* print-menu.html is generated from menu.json by scripts/build-print-menu.js */
+function openPaperMenu() {
+  var frame = document.getElementById('paper-menu-frame');
+  if (!frame.getAttribute('src')) frame.setAttribute('src', 'print-menu.html');
+  document.getElementById('paper-menu-modal').classList.add('active');
+}
+function closePaperMenu() { document.getElementById('paper-menu-modal').classList.remove('active'); }
+
+function printPaperMenu() {
+  var frame = document.getElementById('paper-menu-frame');
+  try {
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+  } catch (e) {
+    /* Sandboxed or native webview blocks cross-frame print — open it standalone. */
+    window.open('print-menu.html', '_blank');
+  }
+}
 
 function renderReports() {
   var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
