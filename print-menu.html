@@ -30,8 +30,8 @@
   .condiments { margin-top: 14px; border: 1.5px solid #111; border-radius: 4px; padding: 8px 10px; }
   .condiment-row { font-size: 8.5pt; line-height: 1.5; }
   .condiment-row + .condiment-row { margin-top: 4px; padding-top: 4px; border-top: 1px dotted #999; }
-  .condiment-label { display: inline-block; min-width: 74px; font-weight: 700; text-transform: uppercase;
-                     letter-spacing: 1px; font-size: 8pt; }
+  .condiment-label { font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 8pt; }
+  .condiment-label::after { content: ":"; margin-right: 5px; }
   footer { margin-top: 12px; border-top: 3px double #111; padding-top: 8px;
            text-align: center; font-size: 8.5pt; color: #555; }
   @media print { body { padding: 0; } .noprint { display: none; } }

@@ -187,8 +187,8 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  .condiments { margin-top: 14px; border: 1.5px solid #111; border-radius: 4px; padding: 8px 10px; }\n' +
 '  .condiment-row { font-size: 8.5pt; line-height: 1.5; }\n' +
 '  .condiment-row + .condiment-row { margin-top: 4px; padding-top: 4px; border-top: 1px dotted #999; }\n' +
-'  .condiment-label { display: inline-block; min-width: 74px; font-weight: 700; text-transform: uppercase;\n' +
-'                     letter-spacing: 1px; font-size: 8pt; }\n' +
+'  .condiment-label { font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 8pt; }\n' +
+'  .condiment-label::after { content: ":"; margin-right: 5px; }\n' +
 '  footer { margin-top: 12px; border-top: 3px double #111; padding-top: 8px;\n' +
 '           text-align: center; font-size: 8.5pt; color: #555; }\n' +
 '  @media print { body { padding: 0; } .noprint { display: none; } }\n' +
