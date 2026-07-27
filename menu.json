@@ -818,7 +818,7 @@
     },
     {
       "name": "Candy Bar",
-      "price": 0,
+      "price": 3,
       "optionGroups": [
         {
           "label": "Pick Your Candy",
