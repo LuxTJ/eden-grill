@@ -8,6 +8,7 @@
  */
 var fs = require('fs');
 var path = require('path');
+var QRCode = require('qrcode');
 
 var ROOT = path.join(__dirname, '..');
 var menu = JSON.parse(fs.readFileSync(path.join(ROOT, 'menu.json'), 'utf8'));
@@ -215,7 +216,13 @@ try {
   logo = 'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, 'logo.png')).toString('base64');
 } catch (e) { /* logo is optional */ }
 
-var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
+/* Scanning the printed sheet pulls this same page up on a phone. The QR is
+   inlined as SVG so the file stays self-contained and prints crisply. */
+var MENU_URL = 'https://eden-grill.vercel.app/print-menu.html';
+
+function buildHtml(qrSvg) {
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
+'<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
 '<meta charset="utf-8">\n' +
 '<title>Eden Grill OKC — Menu</title>\n' +
 '<style>\n' +
@@ -255,6 +262,25 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  .condiment-label::after { content: ":"; margin-right: 5px; }\n' +
 '  footer { margin-top: 12px; border-top: 3px double #111; padding-top: 8px;\n' +
 '           text-align: center; font-size: 8.5pt; color: #555; }\n' +
+'  .qr { line-height: 0; position: relative; display: inline-block; }\n' +
+'  .qr svg { width: 70px; height: 70px; }\n' +
+/* The logo covers the middle modules; error correction level H (30%) carries
+   the loss. Keep the white pad — the logo is black-on-black otherwise. */
+'  .qr-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);\n' +
+'             width: 20%; background: #fff; padding: 1.5px; border-radius: 1px; }\n' +
+'  .qr-caption { font-size: 7pt; letter-spacing: 0.5px; text-transform: uppercase; margin: 2px 0 4px; }\n' +
+/* On a phone the print grid is unreadable — one column, larger type, and the
+   QR is pointless on the page it links to. */
+'  @media screen and (max-width: 700px) {\n' +
+'    body { padding: 16px; font-size: 12pt; }\n' +
+'    .items { grid-template-columns: 1fr; gap: 0; }\n' +
+'    .item { margin-bottom: 10px; }\n' +
+'    .item-desc, .item-extras, .serves { font-size: 10pt; }\n' +
+'    .section h2 { font-size: 14pt; }\n' +
+'    .condiment-row, .condiment-label { font-size: 10pt; }\n' +
+'    header h1 { font-size: 22pt; }\n' +
+'    .qr, .qr-caption { display: none; }\n' +
+'  }\n' +
 '  @media print { body { padding: 0; } .noprint { display: none; } }\n' +
 '  .noprint { text-align: center; margin-bottom: 14px; }\n' +
 '  .noprint button { font: inherit; padding: 8px 20px; border: 1px solid #111; background: #111;\n' +
@@ -272,8 +298,23 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '</header>\n' +
 SECTIONS.map(renderSection).join('\n') + '\n' +
 condiments() +
-'<footer>All items made to order</footer>\n' +
+'<footer>\n' +
+'  <div class="qr">' + qrSvg +
+     (logo ? '<img class="qr-logo" src="' + logo + '" alt="">' : '') + '</div>\n' +
+'  <div class="qr-caption">Scan for this menu on your phone</div>\n' +
+'  <div>All items made to order</div>\n' +
+'</footer>\n' +
 '</body>\n</html>\n';
+}
 
-fs.writeFileSync(path.join(ROOT, 'print-menu.html'), html);
-console.log('Wrote print-menu.html (' + (html.length / 1024).toFixed(1) + ' KB)');
+QRCode.toString(MENU_URL, { type: 'svg', errorCorrectionLevel: 'H', margin: 0 })
+  .then(function (qrSvg) {
+    var html = buildHtml(qrSvg);
+    fs.writeFileSync(path.join(ROOT, 'print-menu.html'), html);
+    console.log('Wrote print-menu.html (' + (html.length / 1024).toFixed(1) + ' KB)');
+    console.log('QR points at ' + MENU_URL);
+  })
+  .catch(function (err) {
+    console.error('QR generation failed: ' + err.message);
+    process.exit(1);
+  });
