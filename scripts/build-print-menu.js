@@ -18,7 +18,8 @@ var SECTIONS = [
   { key: 'onFry', label: 'On Fry' },
   { key: 'combos', label: 'Combos', note: 'Served with your choice of side and a drink' },
   { key: 'drinks', label: 'Drinks & Snacks' },
-  { key: 'lateNight', label: 'Late Night', hours: '9pm – 1am' }
+  /* fullWidth: breaks out of the two-column flow and runs across the page */
+  { key: 'lateNight', label: 'Late Night', hours: '9pm – 1am', fullWidth: true }
 ];
 
 /* Groups that only exist to take an order, not to describe the dish.
@@ -143,7 +144,7 @@ function condiments() {
 function renderSection(sec) {
   var items = menu[sec.key] || [];
   if (!items.length) return '';
-  return '<section class="section">' +
+  return '<section class="section' + (sec.fullWidth ? ' section-wide' : '') + '">' +
     '<h2>' + esc(sec.label) +
       (sec.hours ? '<span class="section-hours">' + esc(sec.hours) + '</span>' : '') +
     '</h2>' +
@@ -184,6 +185,9 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  .item-price { font-weight: 700; font-variant-numeric: tabular-nums; }\n' +
 '  .item-desc { font-size: 8pt; color: #444; margin-top: 1px; }\n' +
 '  .item-extras { font-size: 8pt; color: #666; font-style: italic; margin-top: 1px; }\n' +
+/* Runs the full page width below the two-column flow, items side by side. */
+'  .section-wide { margin-top: 14px; }\n' +
+'  .section-wide .items { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 24px; }\n' +
 '  .condiments { margin-top: 14px; border: 1.5px solid #111; border-radius: 4px; padding: 8px 10px; }\n' +
 '  .condiment-row { font-size: 8.5pt; line-height: 1.5; }\n' +
 '  .condiment-row + .condiment-row { margin-top: 4px; padding-top: 4px; border-top: 1px dotted #999; }\n' +
@@ -205,8 +209,9 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  <div class="tagline">Kitchen &amp; Late Night</div>\n' +
 '</header>\n' +
 '<div class="columns">\n' +
-SECTIONS.map(renderSection).join('\n') +
+SECTIONS.filter(function (s) { return !s.fullWidth; }).map(renderSection).join('\n') +
 '\n</div>\n' +
+SECTIONS.filter(function (s) { return s.fullWidth; }).map(renderSection).join('\n') + '\n' +
 condiments() +
 '<footer>All items made to order &nbsp;•&nbsp; Ask your server about daily specials</footer>\n' +
 '</body>\n</html>\n';
