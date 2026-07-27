@@ -817,49 +817,15 @@
       ]
     },
     {
-      "name": "Hershey's with Almonds",
+      "name": "Candy Bar",
       "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Hershey's Bar",
-      "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Kit Kat",
-      "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Peanut M&Ms",
-      "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Chocolate M&Ms",
-      "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Milky Way",
-      "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Snickers",
-      "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Reese's",
-      "price": 0,
-      "optionGroups": []
-    },
-    {
-      "name": "Twix",
-      "price": 0,
-      "optionGroups": []
+      "optionGroups": [
+        {
+          "label": "Pick Your Candy",
+          "type": "radio",
+          "options": ["Hershey's with Almonds", "Hershey's Bar", "Kit Kat", "Peanut M&Ms", "Chocolate M&Ms", "Milky Way", "Snickers", "Reese's", "Twix"]
+        }
+      ]
     }
   ],
   "lateNight": [
