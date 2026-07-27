@@ -817,15 +817,24 @@ function openPaperMenu() {
 }
 function closePaperMenu() { document.getElementById('paper-menu-modal').classList.remove('active'); }
 
+/* Printing the modal's iframe came out blank: the receipt stylesheet above hides
+   every top-level element except #print-area, the modal included. Rather than
+   open a window (which this webview turns into a navigation, losing the order),
+   copy the menu's own styles and markup into #print-area — the one element the
+   print stylesheet keeps — and print in place. */
 function printPaperMenu() {
-  var frame = document.getElementById('paper-menu-frame');
-  try {
-    frame.contentWindow.focus();
-    frame.contentWindow.print();
-  } catch (e) {
-    /* Sandboxed or native webview blocks cross-frame print — open it standalone. */
-    window.open('print-menu.html', '_blank');
-  }
+  var doc = document.getElementById('paper-menu-frame').contentDocument;
+  var area = document.getElementById('print-area');
+  if (!doc || !doc.body) { alert('The menu is still loading — try again in a moment.'); return; }
+
+  var css = Array.prototype.map.call(doc.querySelectorAll('style'), function (s) {
+    return s.textContent;
+  }).join('\n');
+  area.innerHTML = '<style>' + css + '</style>' + doc.body.innerHTML;
+
+  window.print();
+  /* Leave it up briefly: some browsers return from print() before spooling. */
+  setTimeout(function () { area.innerHTML = ''; }, 3000);
 }
 
 function renderReports() {
