@@ -14,9 +14,14 @@
 <style>
    #print-area { display: none; }
    @media print {
-     html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+     /* The POS shell is a fixed-height flex column with overflow hidden, which
+        clips printing to a single page — unwind it so content can flow. */
+     html, body { margin: 0 !important; padding: 0 !important; background: #fff !important;
+       display: block !important; height: auto !important; min-height: 0 !important;
+       max-height: none !important; overflow: visible !important; }
      body > *:not(#print-area) { display: none !important; }
-     #print-area { display: block !important; }
+     #print-area { display: block !important; height: auto !important; max-height: none !important;
+       overflow: visible !important; }
       .receipt { width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; background: #fff;
         font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.35; }
      .receipt .r-center { text-align: center; }
