@@ -18,7 +18,7 @@ var SECTIONS = [
   { key: 'onFry', label: 'On Fry' },
   { key: 'combos', label: 'Combos', note: 'Served with your choice of side and a drink' },
   { key: 'drinks', label: 'Drinks & Snacks' },
-  { key: 'lateNight', label: 'Late Night' }
+  { key: 'lateNight', label: 'Late Night', hours: '9pm – 1am' }
 ];
 
 /* Groups that only exist to take an order, not to describe the dish.
@@ -106,7 +106,9 @@ function renderSection(sec) {
   var items = menu[sec.key] || [];
   if (!items.length) return '';
   return '<section class="section">' +
-    '<h2>' + esc(sec.label) + '</h2>' +
+    '<h2>' + esc(sec.label) +
+      (sec.hours ? '<span class="section-hours">' + esc(sec.hours) + '</span>' : '') +
+    '</h2>' +
     (sec.note ? '<p class="section-note">' + esc(sec.note) + '</p>' : '') +
     '<ul class="items">' + items.map(renderItem).join('') + '</ul>' +
   '</section>';
@@ -132,7 +134,9 @@ var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
 '  .columns { column-count: 2; column-gap: 28px; }\n' +
 '  .section { break-inside: avoid-column; margin-bottom: 16px; }\n' +
 '  .section h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 2px;\n' +
-'                border-bottom: 1.5px solid #111; padding-bottom: 3px; }\n' +
+'                border-bottom: 1.5px solid #111; padding-bottom: 3px;\n' +
+'                display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }\n' +
+'  .section-hours { font-size: 8.5pt; letter-spacing: 1px; font-weight: 400; text-transform: none; color: #555; }\n' +
 '  .section-note { font-size: 8pt; font-style: italic; color: #555; margin: 3px 0 6px; }\n' +
 '  .items { list-style: none; margin: 6px 0 0; padding: 0; }\n' +
 '  .item { break-inside: avoid; margin-bottom: 7px; }\n' +
