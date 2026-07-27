@@ -785,7 +785,7 @@
         {
           "label": "Pick Your Drink",
           "type": "radio",
-          "options": ["Coke", "Diet Coke", "Diet Sprite", "Sprite", "Dr Pepper", "Diet Dr Pepper"]
+          "options": ["Coke", "Diet Coke", "Sprite", "Sprite Zero", "Dr Pepper", "Dr Pepper Zero"]
         }
       ]
     },
@@ -801,13 +801,64 @@
         {
           "label": "Pick Your Energy Drink",
           "type": "radio",
-          "options": ["Monster", "Red Bull"]
+          "options": ["Monster", "Zero Sugar Monster", "Red Bull", "Sugar Free Red Bull"]
         }
       ]
     },
     {
       "name": "Bag of Chips",
       "price": 2,
+      "optionGroups": [
+        {
+          "label": "Pick Your Chips",
+          "type": "radio",
+          "options": ["Cheetos", "Cool Ranch Doritos", "Nacho Doritos", "Fritos", "BBQ Lays", "Classic Lays", "Cheddar Ruffles"]
+        }
+      ]
+    },
+    {
+      "name": "Hershey's with Almonds",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Hershey's Bar",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Kit Kat",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Peanut M&Ms",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Chocolate M&Ms",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Milky Way",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Snickers",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Reese's",
+      "price": 0,
+      "optionGroups": []
+    },
+    {
+      "name": "Twix",
+      "price": 0,
       "optionGroups": []
     }
   ],
