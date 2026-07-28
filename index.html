@@ -263,26 +263,27 @@ const SECTION_META = {
 };
 
 const PROMO_CODES = { 'STAFF69': 0.5, 'MGR69': 1, 'OWNER69': 1 };
-/* MGR69 is capped at 3 uses per customer name per day; other codes are unlimited. */
-const PROMO_DAILY_LIMIT = { 'MGR69': 3 };
+/* Which codes need a round-trip to check their daily limit — used only to skip
+   the network call for unlimited codes. The actual threshold is enforced
+   server-side (api/promo-usage.js) against the shared order store, since the
+   POS runs on multiple tablets and no single device's localStorage knows what
+   the others have used. */
+const PROMO_LIMITED = { 'MGR69': true };
 let appliedPromo = null;
 
-/* How many times `code` has already been used today for `name` (case/whitespace
-   insensitive), going by orders placed on this device. Used to cap MGR69. */
-function promoUsesToday(code, name) {
-  var target = name.trim().toLowerCase();
-  if (!target) return 0;
-  var todayStr = new Date().toDateString();
-  var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  return all.filter(function (o) {
-    return o.promoCode === code &&
-      (o.customer && o.customer.name || '').trim().toLowerCase() === target &&
-      new Date(o.timestamp).toDateString() === todayStr;
-  }).length;
-}
-function promoLimitReached(code, name) {
-  var limit = PROMO_DAILY_LIMIT[code];
-  return limit !== undefined && promoUsesToday(code, name) >= limit;
+/* Asks the server whether `code` can still be used for `name` today, checked
+   against every device's synced orders. Fails closed on a limited code if the
+   check can't complete (offline, KV down) — allowing it unchecked would defeat
+   the whole point of a cross-device cap. */
+async function checkPromoAllowed(code, name) {
+  if (!PROMO_LIMITED[code]) return { allowed: true };
+  try {
+    var res = await apiFetch('/api/promo-usage?code=' + encodeURIComponent(code) + '&name=' + encodeURIComponent(name));
+    if (!res.ok) return { allowed: false, offline: true };
+    return await res.json();
+  } catch (e) {
+    return { allowed: false, offline: true };
+  }
 }
 
 let menuData = {};
@@ -490,7 +491,7 @@ function openMobileDrawer() {
 
 function closeMobileDrawer() { document.getElementById('mobile-drawer').classList.remove('active'); }
 
-function applyPromoMobile() {
+async function applyPromoMobile() {
   var input = document.getElementById('drawer-promo-input');
   var msg = document.getElementById('drawer-promo-msg');
   var code = input.value.trim().toUpperCase();
@@ -500,13 +501,21 @@ function applyPromoMobile() {
     appliedPromo = null;
     msg.textContent = 'Invalid code';
     msg.className = 'sidebar-promo-msg err';
-  } else if (promoLimitReached(code, name)) {
+    renderSidebar();
+    renderMobileDrawer();
+    return;
+  }
+  if (PROMO_LIMITED[code]) { msg.textContent = 'Checking…'; msg.className = 'sidebar-promo-msg'; }
+  var check = await checkPromoAllowed(code, name);
+  if (!check.allowed) {
     appliedPromo = null;
-    msg.textContent = code + ' already used ' + PROMO_DAILY_LIMIT[code] + 'x today for this name';
+    msg.textContent = check.offline ? code + ' needs a connection to verify — try again'
+      : code + ' already used ' + check.limit + 'x today for this name';
     msg.className = 'sidebar-promo-msg err';
   } else {
     appliedPromo = { code: code, rate: PROMO_CODES[code] };
-    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
+    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off' +
+      (check.limit ? ' (' + (check.uses + 1) + ' of ' + check.limit + ' today)' : '');
     msg.className = 'sidebar-promo-msg ok';
   }
   renderSidebar();
@@ -600,7 +609,7 @@ function clearOrder() {
   renderSidebar();
 }
 
-function applyPromo() {
+async function applyPromo() {
   var input = document.getElementById('promo-input');
   var msg = document.getElementById('promo-msg');
   var code = input.value.trim().toUpperCase();
@@ -610,13 +619,20 @@ function applyPromo() {
     appliedPromo = null;
     msg.textContent = 'Invalid code';
     msg.className = 'sidebar-promo-msg err';
-  } else if (promoLimitReached(code, name)) {
+    renderSidebar();
+    return;
+  }
+  if (PROMO_LIMITED[code]) { msg.textContent = 'Checking…'; msg.className = 'sidebar-promo-msg'; }
+  var check = await checkPromoAllowed(code, name);
+  if (!check.allowed) {
     appliedPromo = null;
-    msg.textContent = code + ' already used ' + PROMO_DAILY_LIMIT[code] + 'x today for this name';
+    msg.textContent = check.offline ? code + ' needs a connection to verify — try again'
+      : code + ' already used ' + check.limit + 'x today for this name';
     msg.className = 'sidebar-promo-msg err';
   } else {
     appliedPromo = { code: code, rate: PROMO_CODES[code] };
-    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
+    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off' +
+      (check.limit ? ' (' + (check.uses + 1) + ' of ' + check.limit + ' today)' : '');
     msg.className = 'sidebar-promo-msg ok';
   }
   renderSidebar();
@@ -627,17 +643,24 @@ async function placeOrder() {
   var name = document.getElementById('customer-name').value.trim();
   if (!name) { alert('Enter a name for the order ticket'); return; }
   if (cart.length === 0) { alert('Add at least one item'); return; }
-  /* Re-check here, not just at apply time — the name field is often filled in
-     after the promo code, or a name could be edited after the code was applied. */
-  if (appliedPromo && promoLimitReached(appliedPromo.code, name)) {
-    var msg = document.getElementById('promo-msg');
-    appliedPromo = null;
-    document.getElementById('promo-input').value = '';
-    msg.textContent = 'Promo code no longer valid for this name today';
-    msg.className = 'sidebar-promo-msg err';
-    renderSidebar();
-    alert('That promo code has already been used the daily limit of times for "' + name + '" — order not placed.');
-    return;
+  /* Re-check with the server here, not just at apply time — the name field is
+     often filled in after the promo code, a name could be edited after the
+     code was applied, or another tablet could have used up the code since. */
+  if (appliedPromo && PROMO_LIMITED[appliedPromo.code]) {
+    var check = await checkPromoAllowed(appliedPromo.code, name);
+    if (!check.allowed) {
+      var msg = document.getElementById('promo-msg');
+      var code = appliedPromo.code;
+      appliedPromo = null;
+      document.getElementById('promo-input').value = '';
+      msg.textContent = check.offline ? code + ' needs a connection to verify — try again' : 'Promo code no longer valid for this name today';
+      msg.className = 'sidebar-promo-msg err';
+      renderSidebar();
+      alert(check.offline
+        ? 'Could not verify "' + code + '" — check the connection and try again. Order not placed.'
+        : 'That promo code has already been used the daily limit of times for "' + name + '" — order not placed.');
+      return;
+    }
   }
   var subtotal = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
   var rate = appliedPromo ? appliedPromo.rate : 0;
@@ -869,6 +892,7 @@ function openReports() {
   var pin = prompt('Enter PIN to access reports:');
   if (pin !== '7217') return;
   document.getElementById('reports-modal').classList.add('active');
+  document.getElementById('report-body').innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:2rem 0;">Loading…</p>';
   renderReports();
 }
 function closeReports() { document.getElementById('reports-modal').classList.remove('active'); }
@@ -959,10 +983,41 @@ function printPaperMenu() {
   setTimeout(function () { area.innerHTML = ''; }, 3000);
 }
 
-function renderReports() {
-  var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+/* Reports now reads the shared server order store (synced from every signed-in
+   tablet) rather than this device's own localStorage — otherwise a second POS
+   device's sales would simply never appear here. Any order still sitting only
+   in localStorage (its background sync hasn't succeeded yet) is folded in too,
+   so nothing this device has actually rung up goes missing from its own view. */
+async function renderReports() {
   var body = document.getElementById('report-body');
-  if (all.length === 0) { body.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:2rem 0;">No orders yet</p>'; return; }
+  var localOrders = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  var serverOrders = null;
+
+  try {
+    var res = await apiFetch('/api/orders');
+    if (res.ok) {
+      var data = await res.json();
+      if (Array.isArray(data)) serverOrders = data;
+    }
+  } catch (e) { /* offline — fall back to local-only below */ }
+
+  var all, banner = '';
+  if (serverOrders) {
+    var byId = {};
+    serverOrders.forEach(function (o) { byId[o.id] = true; });
+    var unsynced = localOrders.filter(function (o) { return !byId[o.id]; });
+    all = serverOrders.concat(unsynced);
+    if (unsynced.length) {
+      banner = '<p style="color:var(--accent-light);font-size:0.8rem;margin-bottom:1rem">' +
+        unsynced.length + ' order(s) from this device haven\'t synced yet and are included below.</p>';
+    }
+  } else {
+    all = localOrders;
+    banner = '<p style="color:var(--danger);font-size:0.8rem;margin-bottom:1rem">' +
+      'Could not reach the server — showing orders from this device only. Other tablets\' sales aren\'t included.</p>';
+  }
+
+  if (all.length === 0) { body.innerHTML = banner + '<p style="text-align:center;color:var(--text-dim);padding:2rem 0;">No orders yet</p>'; return; }
 
   var today = new Date(); today.setHours(0,0,0,0);
   var todayOrders = all.filter(function(o) { return new Date(o.timestamp) >= today; });
@@ -989,7 +1044,7 @@ function renderReports() {
   });
   var promoSorted = Object.keys(promoMap).sort(function(a, b) { return promoMap[b].count - promoMap[a].count; });
 
-  var html = '';
+  var html = banner;
   var totalRevenue = all.reduce(function(s, o) { return s + (o.total || 0); }, 0);
   var todayRevenue = todayOrders.reduce(function(s, o) { return s + (o.total || 0); }, 0);
   html += '<div class="report-summary">' +
@@ -1021,8 +1076,7 @@ function renderReports() {
   html += '<div class="report-section"><h3>Today Orders</h3>';
   todayOrders.slice().reverse().forEach(function(o) {
     var when = new Date(o.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    var idx = all.indexOf(o);
-    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span><button class="report-del-btn" onclick="deleteOrder(' + idx + ')" title="Delete order">✕</button></div>';
+    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span><button class="report-del-btn" onclick="deleteOrder(' + JSON.stringify(o.id) + ')" title="Delete order">✕</button></div>';
     html += '<div class="report-order-items">' + (o.items || []).map(function(it) { return it.quantity + 'x ' + it.name; }).join(', ') + '</div></div>';
   });
   html += '</div>';
@@ -1030,18 +1084,34 @@ function renderReports() {
   body.innerHTML = html;
 }
 
-function deleteOrder(idx) {
-  if (!confirm('Delete order #' + (idx + 1) + '?')) return;
-  var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  all.splice(idx, 1);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  renderReports();
+/* Deletes on the server (visible to every device) and drops the local mirror
+   copy too, so a device that goes on to view Reports offline doesn't resurrect
+   an order it can no longer reach the server to re-delete. */
+async function deleteOrder(id) {
+  if (!confirm('Delete order #' + id.replace('ORD-', '') + '?')) return;
+  try {
+    var res = await apiFetch('/api/orders?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!res.ok) { alert('Could not delete on the server — check the connection and try again.'); return; }
+  } catch (e) {
+    alert('Could not delete on the server — check the connection and try again.');
+    return;
+  }
+  var local = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(local.filter(function (o) { return o.id !== id; })));
+  await renderReports();
 }
 
-function clearAllOrders() {
-  if (!confirm('Clear ALL order history? This cannot be undone.')) return;
+async function clearAllOrders() {
+  if (!confirm('Clear ALL order history? This affects every device and cannot be undone.')) return;
+  try {
+    var res = await apiFetch('/api/orders?id=all', { method: 'DELETE' });
+    if (!res.ok) { alert('Could not clear on the server — check the connection and try again.'); return; }
+  } catch (e) {
+    alert('Could not clear on the server — check the connection and try again.');
+    return;
+  }
   localStorage.setItem(STORAGE_KEY, '[]');
-  renderReports();
+  await renderReports();
 }
 
 async function emailReport() {
