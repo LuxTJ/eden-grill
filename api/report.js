@@ -4,6 +4,13 @@ const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const REPORT_EMAIL = process.env.REPORT_EMAIL || '';
 
+/* The restaurant's local timezone. Vercel Cron only accepts UTC schedules, so
+   vercel.json fires this at both UTC hours that could be 2am here (7 and 8,
+   depending on DST) — whichever one isn't actually 2am locally right now is
+   a no-op below. */
+const TZ = 'America/Chicago';
+const DAYS_SHOWN = 30;   /* cap the per-day breakdown so the email can't grow forever */
+
 async function kvCommand(command) {
   if (!KV_URL || !KV_TOKEN) throw new Error('KV not configured');
   const args = Array.prototype.slice.call(arguments, 1);
@@ -19,66 +26,74 @@ async function kvCommand(command) {
   return data.result;
 }
 
+/* 'YYYY-MM-DD' in the restaurant's local timezone, not the server's (Vercel
+   functions run in UTC, so grouping by raw Date() would put a 9pm CDT order
+   into the wrong day). */
+function localDateKey(date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+}
+function localHour(date) {
+  return Number(new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hourCycle: 'h23' }).format(date));
+}
+function friendlyDate(dateKey) {
+  /* dateKey is a plain YYYY-MM-DD with no time — parse as noon local to avoid
+     the UTC-midnight rollover shifting it a day when formatted. */
+  var d = new Date(dateKey + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+function money(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); }
+
 function buildReport(orders) {
-  var today = new Date(); today.setHours(0, 0, 0, 0);
-  var todayOrders = orders.filter(function (o) { return new Date(o.timestamp) >= today; });
-
-  var itemMap = {};
+  var byDate = {};
   orders.forEach(function (o) {
-    (o.items || []).forEach(function (it) {
-      var key = it.name;
-      if (!itemMap[key]) itemMap[key] = 0;
-      itemMap[key] += it.quantity || 1;
-    });
+    var key = localDateKey(new Date(o.timestamp));
+    (byDate[key] = byDate[key] || []).push(o);
   });
-  var sorted = Object.keys(itemMap).sort(function (a, b) { return itemMap[b] - itemMap[a]; });
+  var allDates = Object.keys(byDate).sort().reverse();   /* most recent first */
+  var shownDates = allDates.slice(0, DAYS_SHOWN);
 
-  var todayItems = {};
-  todayOrders.forEach(function (o) {
-    (o.items || []).forEach(function (it) {
-      var key = it.name;
-      if (!todayItems[key]) todayItems[key] = 0;
-      todayItems[key] += it.quantity || 1;
+  var allTimeRevenue = orders.reduce(function (sum, o) { return sum + (o.total || 0); }, 0);
+
+  var dayTables = shownDates.map(function (dateKey) {
+    var dayOrders = byDate[dateKey];
+    var items = {};
+    dayOrders.forEach(function (o) {
+      (o.items || []).forEach(function (it) {
+        items[it.name] = (items[it.name] || 0) + (it.quantity || 1);
+      });
     });
-  });
+    var revenue = dayOrders.reduce(function (sum, o) { return sum + (o.total || 0); }, 0);
+    var itemRows = Object.keys(items).sort(function (a, b) { return items[b] - items[a]; })
+      .map(function (k) { return '<tr><td>' + k + '</td><td style="text-align:center">' + items[k] + '</td></tr>'; })
+      .join('');
 
-  var todayItemRows = Object.keys(todayItems).sort(function (a, b) { return todayItems[b] - todayItems[a]; })
-    .map(function (k) { return '<tr><td>' + k + '</td><td style="text-align:center">' + todayItems[k] + '</td></tr>'; }).join('');
-
-  var rows = sorted.map(function (k) { return '<tr><td>' + k + '</td><td style="text-align:center">' + itemMap[k] + '</td></tr>'; }).join('');
-
-  var todayRows = todayOrders.map(function (o) {
-    var when = new Date(o.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    var items = (o.items || []).map(function (it) { return it.quantity + 'x ' + it.name; }).join(', ');
-    return '<tr><td>#' + o.id.slice(-6) + '</td><td>' + (o.customer.name || '-') + '</td><td>' + when + '</td><td>' + items + '</td></tr>';
+    return '<h2>' + friendlyDate(dateKey) + '</h2>' +
+      '<p style="color:#555;margin:0 0 6px">' + dayOrders.length + ' order' + (dayOrders.length === 1 ? '' : 's') +
+      ' &middot; ' + money(revenue) + '</p>' +
+      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:18px">' +
+      '<tr><th>Item</th><th>Qty</th></tr>' +
+      (itemRows || '<tr><td colspan="2">No items</td></tr>') +
+      '</table>';
   }).join('');
 
-  var dateStr = new Date().toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  var rangeNote = allDates.length > shownDates.length
+    ? '<p style="color:#888;font-size:0.85em">Showing the most recent ' + DAYS_SHOWN + ' of ' + allDates.length + ' days on record.</p>'
+    : '';
+
+  var subjectDate = shownDates.length ? friendlyDate(shownDates[0]) : friendlyDate(localDateKey(new Date()));
 
   return {
-    subject: 'Eden Grill Daily Report - ' + dateStr,
+    subject: 'Eden Grill Daily Report - ' + subjectDate,
     html: '<h1>Eden Grill Daily Report</h1>' +
-      '<p><strong>' + dateStr + '</strong></p>' +
-      '<h2>Summary</h2>' +
-      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">' +
-      '<tr><th>Total Orders (All Time)</th><th>Today Orders</th></tr>' +
-      '<tr><td style="text-align:center">' + orders.length + '</td><td style="text-align:center">' + todayOrders.length + '</td></tr>' +
+      '<h2>All-Time Summary</h2>' +
+      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:18px">' +
+      '<tr><th>Total Orders</th><th>Total Revenue</th><th>Days on Record</th></tr>' +
+      '<tr><td style="text-align:center">' + orders.length + '</td>' +
+      '<td style="text-align:center">' + money(allTimeRevenue) + '</td>' +
+      '<td style="text-align:center">' + allDates.length + '</td></tr>' +
       '</table>' +
-      '<h2>Items Sold Today</h2>' +
-      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">' +
-      '<tr><th>Item</th><th>Qty</th></tr>' +
-      (todayItemRows || '<tr><td colspan="2">No orders today</td></tr>') +
-      '</table>' +
-      '<h2>All-Time Items Sold</h2>' +
-      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">' +
-      '<tr><th>Item</th><th>Qty</th></tr>' +
-      rows +
-      '</table>' +
-      '<h2>Today Orders</h2>' +
-      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">' +
-      '<tr><th>Order</th><th>Name</th><th>Time</th><th>Items</th></tr>' +
-      (todayRows || '<tr><td colspan="4">No orders today</td></tr>') +
-      '</table>',
+      rangeNote +
+      dayTables,
   };
 }
 
@@ -103,6 +118,25 @@ module.exports = async function handler(req, res) {
 
     if (expectedKey && keySent !== expectedKey) {
       return res.status(403).json({ error: 'Invalid key' });
+    }
+
+    /* GET = Vercel Cron. POST = the POS's "Email Report" button, which should
+       always send on demand. Two cron entries exist (one per possible DST
+       offset); the one that doesn't land on local 2am no-ops here. */
+    if (req.method === 'GET') {
+      var now = new Date();
+      var hour = localHour(now);
+      if (hour !== 2) {
+        return res.status(200).json({ ok: true, skipped: true, reason: 'not the scheduled local hour (currently ' + hour + ')' });
+      }
+
+      /* Guard against a duplicate send if Vercel retries the invocation, or
+         both cron entries somehow land on hour 2 around a DST transition. */
+      var dedupeKey = 'edenGrillReportSent:' + localDateKey(now);
+      var claimed = await kvCommand('SET', dedupeKey, '1', 'NX', 'EX', 82800);
+      if (!claimed) {
+        return res.status(200).json({ ok: true, skipped: true, reason: 'already sent for today' });
+      }
     }
 
     const orders = JSON.parse((await kvCommand('GET', STORAGE_KEY)) || '[]');

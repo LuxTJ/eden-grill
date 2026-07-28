@@ -272,12 +272,12 @@
         {
           "label": "Exclusions",
           "type": "checkbox",
-          "options": ["No Potato"]
+          "options": ["No Potato", "No Egg"]
         },
         {
           "label": "Pick Toppings",
           "type": "checkbox",
-          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers", "Potato", "Egg"]
+          "options": ["No Toppings", "Cilantro", "Diced Onion", "Tomato", "Pico", "Jalapenos", "Bell Peppers"]
         },
         {
           "label": "Pick Sauce",
@@ -754,12 +754,12 @@
         {
           "label": "Exclusions 1",
           "type": "checkbox",
-          "options": ["No Potato"]
+          "options": ["No Potato", "No Egg"]
         },
         {
           "label": "Exclusions 2",
           "type": "checkbox",
-          "options": ["No Potato"]
+          "options": ["No Potato", "No Egg"]
         },
         {
           "label": "Toppings 1",
@@ -861,7 +861,7 @@
         {
           "label": "Exclusions",
           "type": "checkbox",
-          "options": ["No Potato"]
+          "options": ["No Potato", "No Egg"]
         },
         {
           "label": "Pick Toppings",
