@@ -42,6 +42,20 @@
 </head>
 <body>
 
+<!-- Login gate — covers the POS until a device has exchanged the staff password
+     for the API key. Hidden by default so a slow script can't flash the POS. -->
+<div class="login-screen active" id="login-screen">
+  <form class="login-card" id="login-form" onsubmit="return posLogin(event)">
+    <img src="logo.png" alt="Eden Grill" class="login-logo">
+    <h1>Eden Grill OKC</h1>
+    <p class="login-sub">Staff sign in</p>
+    <input type="password" id="login-password" class="login-input" placeholder="Password"
+           autocomplete="current-password" required>
+    <button type="submit" class="login-btn" id="login-btn">Sign In</button>
+    <div class="login-msg" id="login-msg"></div>
+  </form>
+</div>
+
 <header class="pos-header">
   <div class="pos-header-left">
     <img src="logo.png" alt="Eden Grill" class="pos-logo">
@@ -61,6 +75,9 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg>
     </button>
     <button class="update-pill" id="update-pill" onclick="location.reload()" title="A new version is ready">Update ready</button>
+    <button class="pos-btn pos-btn-ghost" onclick="posLogout()" title="Sign out">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
     <div class="pos-time" id="pos-time"></div>
   </div>
 </header>
@@ -613,7 +630,7 @@ async function placeOrder() {
   renderSidebar();
 
   // Sync to KV (fire-and-forget)
-  fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
+  apiFetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(function(e) { console.warn('KV sync failed:', e); });
 
   // Thermal printer — auto-print both receipts
   var printerReady = window.EdenPrinter && EdenPrinter.status().connected;
@@ -813,6 +830,63 @@ function openReports() {
 }
 function closeReports() { document.getElementById('reports-modal').classList.remove('active'); }
 
+/* ── Staff login ──
+   The password is checked by /api/login on the server; the device stores only
+   the API key it hands back, which every /api/* call then carries. */
+var API_KEY_STORAGE = 'edenPosKey';
+function posKey() { return localStorage.getItem(API_KEY_STORAGE) || ''; }
+
+function showLogin(msg) {
+  document.getElementById('login-screen').classList.add('active');
+  document.getElementById('login-msg').textContent = msg || '';
+  var pw = document.getElementById('login-password');
+  pw.value = '';
+  setTimeout(function () { pw.focus(); }, 50);
+}
+function hideLogin() { document.getElementById('login-screen').classList.remove('active'); }
+
+async function posLogin(e) {
+  e.preventDefault();
+  var btn = document.getElementById('login-btn');
+  var msg = document.getElementById('login-msg');
+  btn.disabled = true; btn.textContent = 'Signing in…'; msg.textContent = '';
+  try {
+    var res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: document.getElementById('login-password').value })
+    });
+    var data = await res.json().catch(function () { return {}; });
+    if (!res.ok || !data.key) { msg.textContent = data.error || 'Sign in failed.'; return false; }
+    localStorage.setItem(API_KEY_STORAGE, data.key);
+    hideLogin();
+  } catch (err) {
+    msg.textContent = 'Network error — check the connection.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+  return false;
+}
+
+function posLogout() {
+  if (cart.length && !confirm('Sign out? The order in progress will be cleared.')) return;
+  localStorage.removeItem(API_KEY_STORAGE);
+  cart = []; appliedPromo = null; renderSidebar();
+  showLogin('Signed out.');
+}
+
+/* A 401 means the key was rotated on the server — send them back to sign in. */
+async function apiFetch(url, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({}, opts.headers || {}, { 'X-Eden-Key': posKey() });
+  var res = await fetch(url, opts);
+  if (res.status === 401) {
+    localStorage.removeItem(API_KEY_STORAGE);
+    showLogin('Session expired — sign in again.');
+  }
+  return res;
+}
+
 /* ── Paper Menu ── */
 /* print-menu.html is generated from menu.json by scripts/build-print-menu.js */
 function openPaperMenu() {
@@ -952,6 +1026,10 @@ async function load() {
   renderAll();
 }
 load();
+
+/* menu.json is public; gate everything else behind a sign-in so an unattended
+   tablet doesn't hand out order history to whoever walks up to it. */
+if (posKey()) { hideLogin(); } else { showLogin(); }
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');

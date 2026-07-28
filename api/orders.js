@@ -17,12 +17,37 @@ async function kvCommand(command) {
   return data.result;
 }
 
+/* Browsers the POS runs in: the site itself, plus the Capacitor webview origins.
+   Note CORS only restrains browser JS — the POS_API_KEY below is what actually
+   stops curl. */
+const ALLOWED_ORIGINS = [
+  'https://eden-grill.vercel.app',
+  'capacitor://localhost',
+  'http://localhost',
+  'https://localhost',
+];
+
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.indexOf(origin) !== -1) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Eden-Key');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  /* Fails closed: without POS_API_KEY set in the Vercel env nothing is served,
+     so a missing config can't quietly leave order history public. */
+  const expectedKey = process.env.POS_API_KEY || '';
+  if (!expectedKey) {
+    return res.status(503).json({ error: 'POS_API_KEY not configured on the server' });
+  }
+  const sentKey = req.headers['x-eden-key'] || '';
+  if (sentKey !== expectedKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   try {
     if (!KV_URL || !KV_TOKEN) {

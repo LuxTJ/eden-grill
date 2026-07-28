@@ -34,7 +34,15 @@
 
 <h1>Eden Grill — Print Station</h1>
 
-<div class="card">
+<div class="card" id="auth-card">
+  <div class="row"><strong>Staff sign in</strong></div>
+  <input type="password" id="station-password" placeholder="Password"
+         style="width:100%;max-width:320px;padding:0.6rem 0.8rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-bottom:0.75rem;">
+  <div><button onclick="stationLogin()">Sign In</button></div>
+  <div class="msg" id="auth-msg"></div>
+</div>
+
+<div class="card" id="printer-card" style="display:none">
   <div class="row">
     <span class="dot" id="printer-dot"></span>
     <span id="printer-status">Printer not connected</span>
@@ -43,7 +51,7 @@
   <div class="msg" id="printer-msg"></div>
 </div>
 
-<div class="card">
+<div class="card" id="session-card" style="display:none">
   <div class="row">
     <span class="dot" id="session-dot"></span>
     <span id="session-status">Session not started</span>
@@ -54,7 +62,7 @@
   <div class="stat" id="poll-stat"></div>
 </div>
 
-<div class="card">
+<div class="card" id="log-card" style="display:none">
   <div class="row"><strong>Activity</strong></div>
   <div class="log" id="log"></div>
 </div>
@@ -64,9 +72,57 @@
 'use strict';
 
 var SEEN_KEY = 'edenGrillStationSeen';
+var API_KEY_STORAGE = 'edenPosKey';   /* shared with index.html — sign in once, works on both */
 var POLL_MS = 4000;
 var pollTimer = null;
 var polling = false;
+
+function stationKey() { return localStorage.getItem(API_KEY_STORAGE) || ''; }
+
+function showAuth(msg) {
+  document.getElementById('auth-card').style.display = '';
+  document.getElementById('printer-card').style.display = 'none';
+  document.getElementById('session-card').style.display = 'none';
+  document.getElementById('log-card').style.display = 'none';
+  setMsg('auth-msg', msg || '', msg ? 'err' : '');
+}
+function hideAuth() {
+  document.getElementById('auth-card').style.display = 'none';
+  document.getElementById('printer-card').style.display = '';
+  document.getElementById('session-card').style.display = '';
+  document.getElementById('log-card').style.display = '';
+}
+
+async function stationLogin() {
+  var pw = document.getElementById('station-password').value;
+  setMsg('auth-msg', 'Signing in…');
+  try {
+    var res = await fetch('/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    var data = await res.json().catch(function () { return {}; });
+    if (!res.ok || !data.key) { setMsg('auth-msg', data.error || 'Sign in failed.', 'err'); return; }
+    localStorage.setItem(API_KEY_STORAGE, data.key);
+    location.reload();   /* simplest way to re-run init() cleanly (printer reconnect, etc.) */
+  } catch (err) {
+    setMsg('auth-msg', 'Network error — check the connection.', 'err');
+  }
+}
+
+/* Same key the POS uses; if the server rejects it (rotated/missing), send the
+   station back to sign-in rather than silently polling nothing. */
+async function apiFetch(url, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({}, opts.headers || {}, { 'X-Eden-Key': stationKey() });
+  var res = await fetch(url, opts);
+  if (res.status === 401) {
+    stopSession();
+    localStorage.removeItem(API_KEY_STORAGE);
+    showAuth('Session expired — sign in again.');
+  }
+  return res;
+}
 
 function seenSet() {
   try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }
@@ -114,7 +170,7 @@ async function startSession() {
 
   setMsg('session-msg', 'Loading current orders to set a baseline…');
   try {
-    var res = await fetch('/api/orders');
+    var res = await apiFetch('/api/orders');
     var orders = await res.json();
     if (!Array.isArray(orders)) throw new Error('Unexpected response from /api/orders');
     var seen = seenSet();
@@ -153,7 +209,7 @@ async function poll() {
   if (!polling) return;
   var stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   try {
-    var res = await fetch('/api/orders');
+    var res = await apiFetch('/api/orders');
     var orders = await res.json();
     if (!Array.isArray(orders)) throw new Error('Unexpected response');
     document.getElementById('poll-stat').textContent = 'Last poll: ' + stamp + ' — ' + orders.length + ' total orders';
@@ -178,6 +234,7 @@ async function poll() {
 }
 
 (async function init() {
+  if (stationKey()) { hideAuth(); } else { showAuth(); return; }
   refreshPrinterUI();
   EdenPrinter.onChange(refreshPrinterUI);
   try {
