@@ -262,8 +262,29 @@ const SECTION_META = {
   lateNight:  { label: 'LATE NIGHT',  icon: '🌙' }
 };
 
-const PROMO_CODES = { 'STAFF69': 0.5, 'MGR69': 1 };
+const PROMO_CODES = { 'STAFF69': 0.5, 'MGR69': 1, 'OWNER69': 1 };
+/* MGR69 is capped at 3 uses per customer name per day; other codes are unlimited. */
+const PROMO_DAILY_LIMIT = { 'MGR69': 3 };
 let appliedPromo = null;
+
+/* How many times `code` has already been used today for `name` (case/whitespace
+   insensitive), going by orders placed on this device. Used to cap MGR69. */
+function promoUsesToday(code, name) {
+  var target = name.trim().toLowerCase();
+  if (!target) return 0;
+  var todayStr = new Date().toDateString();
+  var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  return all.filter(function (o) {
+    return o.promoCode === code &&
+      (o.customer && o.customer.name || '').trim().toLowerCase() === target &&
+      new Date(o.timestamp).toDateString() === todayStr;
+  }).length;
+}
+function promoLimitReached(code, name) {
+  var limit = PROMO_DAILY_LIMIT[code];
+  return limit !== undefined && promoUsesToday(code, name) >= limit;
+}
+
 let menuData = {};
 let cart = [];
 let modItem = null;
@@ -473,15 +494,20 @@ function applyPromoMobile() {
   var input = document.getElementById('drawer-promo-input');
   var msg = document.getElementById('drawer-promo-msg');
   var code = input.value.trim().toUpperCase();
+  var name = document.getElementById('drawer-customer-name').value;
   if (!code) { appliedPromo = null; msg.textContent = ''; msg.className = 'sidebar-promo-msg'; renderSidebar(); renderMobileDrawer(); return; }
-  if (PROMO_CODES[code] !== undefined) {
-    appliedPromo = { code: code, rate: PROMO_CODES[code] };
-    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
-    msg.className = 'sidebar-promo-msg ok';
-  } else {
+  if (PROMO_CODES[code] === undefined) {
     appliedPromo = null;
     msg.textContent = 'Invalid code';
     msg.className = 'sidebar-promo-msg err';
+  } else if (promoLimitReached(code, name)) {
+    appliedPromo = null;
+    msg.textContent = code + ' already used ' + PROMO_DAILY_LIMIT[code] + 'x today for this name';
+    msg.className = 'sidebar-promo-msg err';
+  } else {
+    appliedPromo = { code: code, rate: PROMO_CODES[code] };
+    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
+    msg.className = 'sidebar-promo-msg ok';
   }
   renderSidebar();
   renderMobileDrawer();
@@ -578,15 +604,20 @@ function applyPromo() {
   var input = document.getElementById('promo-input');
   var msg = document.getElementById('promo-msg');
   var code = input.value.trim().toUpperCase();
+  var name = document.getElementById('customer-name').value;
   if (!code) { appliedPromo = null; msg.textContent = ''; msg.className = 'sidebar-promo-msg'; renderSidebar(); return; }
-  if (PROMO_CODES[code] !== undefined) {
-    appliedPromo = { code: code, rate: PROMO_CODES[code] };
-    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
-    msg.className = 'sidebar-promo-msg ok';
-  } else {
+  if (PROMO_CODES[code] === undefined) {
     appliedPromo = null;
     msg.textContent = 'Invalid code';
     msg.className = 'sidebar-promo-msg err';
+  } else if (promoLimitReached(code, name)) {
+    appliedPromo = null;
+    msg.textContent = code + ' already used ' + PROMO_DAILY_LIMIT[code] + 'x today for this name';
+    msg.className = 'sidebar-promo-msg err';
+  } else {
+    appliedPromo = { code: code, rate: PROMO_CODES[code] };
+    msg.textContent = code + ' — ' + Math.round(appliedPromo.rate * 100) + '% off';
+    msg.className = 'sidebar-promo-msg ok';
   }
   renderSidebar();
 }
@@ -596,6 +627,18 @@ async function placeOrder() {
   var name = document.getElementById('customer-name').value.trim();
   if (!name) { alert('Enter a name for the order ticket'); return; }
   if (cart.length === 0) { alert('Add at least one item'); return; }
+  /* Re-check here, not just at apply time — the name field is often filled in
+     after the promo code, or a name could be edited after the code was applied. */
+  if (appliedPromo && promoLimitReached(appliedPromo.code, name)) {
+    var msg = document.getElementById('promo-msg');
+    appliedPromo = null;
+    document.getElementById('promo-input').value = '';
+    msg.textContent = 'Promo code no longer valid for this name today';
+    msg.className = 'sidebar-promo-msg err';
+    renderSidebar();
+    alert('That promo code has already been used the daily limit of times for "' + name + '" — order not placed.');
+    return;
+  }
   var subtotal = cart.reduce(function(s, i) { return s + i.unitTotal * i.quantity; }, 0);
   var rate = appliedPromo ? appliedPromo.rate : 0;
   var discount = +(subtotal * rate).toFixed(2);
