@@ -639,7 +639,7 @@
         {
           "label": "Pick Your Dressing",
           "type": "radio",
-          "options": ["Ranch", "Thousand Island", "Vinaigrette", "Italian", "Red Salsa", "Green Salsa"]
+          "options": ["Ranch", "Thousand Island", "Vinaigrette", "Italian", "Red Salsa", "Green Salsa", "Caesar"]
         }
       ]
     },
