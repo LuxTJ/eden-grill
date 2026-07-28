@@ -266,13 +266,13 @@
       ]
     },
     {
-      "name": "Breakfast Tacos with Egg and Cheese",
+      "name": "Breakfast Tacos with Egg and Potato",
       "price": 5,
       "optionGroups": [
         {
           "label": "Exclusions",
           "type": "checkbox",
-          "options": ["No Potato", "No Cheese"]
+          "options": ["No Potato"]
         },
         {
           "label": "Pick Toppings",
@@ -754,12 +754,12 @@
         {
           "label": "Exclusions 1",
           "type": "checkbox",
-          "options": ["No Potato", "No Cheese"]
+          "options": ["No Potato"]
         },
         {
           "label": "Exclusions 2",
           "type": "checkbox",
-          "options": ["No Potato", "No Cheese"]
+          "options": ["No Potato"]
         },
         {
           "label": "Toppings 1",
@@ -855,13 +855,13 @@
   ],
   "lateNight": [
     {
-      "name": "Breakfast Tacos with Egg and Cheese",
+      "name": "Breakfast Tacos with Egg and Potato",
       "price": 5,
       "optionGroups": [
         {
           "label": "Exclusions",
           "type": "checkbox",
-          "options": ["No Potato", "No Cheese"]
+          "options": ["No Potato"]
         },
         {
           "label": "Pick Toppings",
