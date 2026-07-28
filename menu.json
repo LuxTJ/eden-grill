@@ -177,6 +177,30 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Beef Hotdog",
+      "price": 5,
+      "optionGroups": [
+        {
+          "label": "Pick Toppings",
+          "type": "checkbox",
+          "options": ["No Toppings", "Chopped Onion", "Relish", "Pickles", "Tomato", "Pico"]
+        },
+        {
+          "label": "Pick Your Sauce",
+          "type": "checkbox",
+          "options": ["Mustard", "Mayonnaise", "Ketchup", "NO Sauce"]
+        },
+        {
+          "label": "Add On's",
+          "type": "checkbox",
+          "options": [
+            { "name": "Cheese Sauce", "price": 1 },
+            { "name": "Shredded Cheese", "price": 1 }
+          ]
+        }
+      ]
     }
   ],
   "onTortilla": [
