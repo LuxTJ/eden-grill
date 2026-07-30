@@ -142,7 +142,7 @@
     <div class="confirm-check">✓</div>
     <h2>Order Placed!</h2>
     <p id="confirmation-text"></p>
-    <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy()">Print Customer Copy</button>
+    <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy()">Print Store Copy</button>
     <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy()">Print Kitchen Copy</button>
     <button class="pay-btn" onclick="closeConfirmation()">Done</button>
   </div>
@@ -682,7 +682,7 @@ async function placeOrder() {
   document.getElementById('order-confirmation').classList.add('active');
   closeMobileDrawer();
   document.getElementById('confirmation-text').textContent =
-    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap a button below to print. Hand customer copy to guest, kitchen copy to cook.';
+    'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap a button below to print. Hand store copy to guest, kitchen copy to cook.';
   document.getElementById('btn-print-customer').style.display = '';
   document.getElementById('btn-print-kitchen').style.display = '';
   pendingKitchenOrder = order;
