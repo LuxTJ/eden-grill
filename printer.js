@@ -134,7 +134,7 @@
     b.raw(CMD.INIT);
     b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('EDEN GRILL').raw(CMD.SIZE_NORMAL).raw(CMD.BOLD_OFF);
     b.line('OKC');
-    b.raw(CMD.BOLD_ON).line('CUSTOMER RECEIPT').raw(CMD.BOLD_OFF);
+    b.raw(CMD.BOLD_ON).line('STORE RECEIPT').raw(CMD.BOLD_OFF);
     b.raw(CMD.ALIGN_LEFT).rule();
     b.row('Order #', order.id.replace('ORD-', ''));
     b.row('Date', dateStr);
@@ -362,7 +362,7 @@
     }).join('');
     var sub = order.subtotal != null ? order.subtotal : order.total;
     return '<div class="receipt">' +
-      '<div class="r-center r-title">EDEN GRILL</div><div class="r-center">OKC</div><div class="r-center r-copy">CUSTOMER RECEIPT</div><hr>' +
+      '<div class="r-center r-title">EDEN GRILL</div><div class="r-center">OKC</div><div class="r-center r-copy">STORE RECEIPT</div><hr>' +
       '<div class="r-row"><span>Order #</span><span>' + order.id.replace('ORD-', '') + '</span></div>' +
       '<div class="r-row"><span>Date</span><span>' + when + '</span></div>' +
       '<div class="r-row"><span>Name</span><span>' + order.customer.name + '</span></div><hr>' +
