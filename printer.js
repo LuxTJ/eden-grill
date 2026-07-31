@@ -55,7 +55,10 @@
 
   function fmtMoney(n) { return '$' + Number(n).toFixed(2); }
 
-  // Group item options: "For Two" combos split into Item 1 / Item 2 sections, regular items grouped by label
+  // Group item options: "For Two" combos split into Item 1 / Item 2 sections.
+  // The group label ("Pick Your Meat", "Toppings 2") is dropped entirely —
+  // staff just need what was picked, not which menu question it came from —
+  // so this returns a flat list of chosen values per section.
   function formatItemOptions(options) {
     if (!options || options.length === 0) return [];
     var hasNumberedOptions = options.some(function(opt) {
@@ -69,57 +72,49 @@
         var m = label.match(/^(.+)\s(\d+)$/);
         if (m) numberedBaseLabels[m[1]] = true;
       });
-      var rawG = { '1': {}, '2': {}, 's': {} };
+      var shared = [], g1 = [], g2 = [];
       options.forEach(function(opt) {
         var ci = opt.indexOf(': '); if (ci === -1) return;
         var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
         var m = label.match(/^(.+)\s(\d+)$/);
-        var targetGroup, baseLabel;
-        if (m && rawG[m[2]]) {
-          targetGroup = m[2]; baseLabel = m[1];
+        if (m && (m[2] === '1' || m[2] === '2')) {
+          (m[2] === '1' ? g1 : g2).push(value);
         } else if (numberedBaseLabels[label]) {
-          targetGroup = '1'; baseLabel = label;
+          g1.push(value);
         } else {
-          targetGroup = 's'; baseLabel = label;
+          shared.push(value);
         }
-        if (!rawG[targetGroup][baseLabel]) rawG[targetGroup][baseLabel] = [];
-        rawG[targetGroup][baseLabel].push(value);
       });
-      var g1 = [], g2 = [], gs = [];
-      Object.keys(rawG['s']).forEach(function(l) { gs.push({ label: l, value: rawG['s'][l].join(', ') }); });
-      Object.keys(rawG['1']).forEach(function(l) { g1.push({ label: l, value: rawG['1'][l].join(', ') }); });
-      Object.keys(rawG['2']).forEach(function(l) { g2.push({ label: l, value: rawG['2'][l].join(', ') }); });
       return [
-        { section: 'Item 1', items: gs.concat(g1) },
-        { section: 'Item 2', items: gs.concat(g2) }
+        { section: 'Item 1', values: shared.concat(g1) },
+        { section: 'Item 2', values: shared.concat(g2) }
       ];
     }
-    var grouped = {}, order = [];
-    options.forEach(function(opt) {
-      var ci = opt.indexOf(': '); if (ci === -1) return;
-      var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
-      if (!grouped[label]) { grouped[label] = []; order.push(label); }
-      grouped[label].push(value);
+    var values = options.map(function(opt) {
+      var ci = opt.indexOf(': ');
+      return ci === -1 ? opt : opt.substring(ci + 2).trim();
     });
-    return [{ section: null, items: order.map(function(l) { return { label: l, value: grouped[l].join(', ') }; }) }];
+    return [{ section: null, values: values }];
   }
 
-  // Write formatted options to a Buffer for thermal printer (ESC/POS)
+  // Write formatted options to a Buffer for thermal printer (ESC/POS): one
+  // short "- value" line per selection, no label.
   function writeOptionsToBuffer(b, options, indent) {
     indent = indent || '  ';
     var sections = formatItemOptions(options);
     sections.forEach(function(sec) {
       if (sec.section) b.line(indent + '[ ' + sec.section + ' ]');
-      sec.items.forEach(function(it) { b.line(indent + '- ' + it.label + ': ' + it.value); });
+      sec.values.forEach(function(v) { b.line(indent + '- ' + v); });
     });
   }
 
-  // Format options as HTML for browser print receipts
+  // Format options as HTML for browser print receipts — same as the thermal
+  // path above, just label-free bullet lines.
   function formatItemOptionsHtml(options) {
     var s = formatItemOptions(options);
     return s.map(function(sec) {
       var h = sec.section ? '<div class="r-item-section">[ ' + sec.section + ' ]</div>' : '';
-      h += sec.items.map(function(it) { return '<div class="r-item-line">- ' + it.label + ': ' + it.value + '</div>'; }).join('');
+      h += sec.values.map(function(v) { return '<div class="r-item-line">- ' + v + '</div>'; }).join('');
       return h;
     }).join('');
   }
@@ -132,8 +127,11 @@
     const timeStr = when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     b.raw(CMD.INIT);
-    b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('EDEN GRILL').raw(CMD.SIZE_NORMAL).raw(CMD.BOLD_OFF);
-    b.line('OKC');
+    b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('EDEN GRILL').raw(CMD.BOLD_OFF);
+    /* SIZE_TALL doubles character height only, not width, so it reads much
+       bigger without changing how many characters fit per line — row()'s
+       column-padding math (based on character count) still lines up. */
+    b.raw(CMD.SIZE_TALL).line('OKC');
     b.raw(CMD.BOLD_ON).line('STORE RECEIPT').raw(CMD.BOLD_OFF);
     b.raw(CMD.ALIGN_LEFT).rule();
     b.row('Order #', order.id.replace('ORD-', ''));
@@ -154,7 +152,7 @@
     if (order.discount) {
       b.row('Discount' + (order.promoCode ? ' (' + order.promoCode + ')' : ''), '-' + fmtMoney(order.discount));
     }
-    b.raw(CMD.BOLD_ON).raw(CMD.SIZE_TALL).row('TOTAL', fmtMoney(order.total)).raw(CMD.SIZE_NORMAL).raw(CMD.BOLD_OFF);
+    b.raw(CMD.BOLD_ON).row('TOTAL', fmtMoney(order.total)).raw(CMD.BOLD_OFF);
     b.row('Paid', 'CASH');
     b.rule();
     b.raw(CMD.ALIGN_CENTER).line('Made to order - Thank you!');
@@ -170,8 +168,8 @@
     const timeStr = when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     b.raw(CMD.INIT);
-    b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('KITCHEN TICKET').raw(CMD.SIZE_NORMAL).raw(CMD.BOLD_OFF);
-    b.raw(CMD.ALIGN_LEFT).rule();
+    b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('KITCHEN TICKET').raw(CMD.BOLD_OFF);
+    b.raw(CMD.SIZE_TALL).raw(CMD.ALIGN_LEFT).rule();
     b.row('Order #', order.id.replace('ORD-', ''));
     b.row('Time', timeStr);
     b.row('Name', order.customer && order.customer.name ? order.customer.name : '-');
