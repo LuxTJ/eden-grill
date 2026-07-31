@@ -140,8 +140,13 @@
   function writeOptionsToBuffer(b, options, indent) {
     indent = indent || '  ';
     var sections = formatItemOptions(options);
-    sections.forEach(function(sec) {
-      if (sec.section) b.line(indent + '[ ' + sec.section + ' ]');
+    sections.forEach(function(sec, si) {
+      /* Blank line between the two people's halves of a "For Two" combo, so
+         they don't read as one continuous list. */
+      if (sec.section) {
+        if (si > 0) b.line('');
+        b.line(indent + '[ ' + sec.section + ' ]');
+      }
       sec.values.forEach(function(v) { b.line(indent + '- ' + v); });
     });
   }
@@ -150,8 +155,12 @@
   // path above, just label-free bullet lines.
   function formatItemOptionsHtml(options) {
     var s = formatItemOptions(options);
-    return s.map(function(sec) {
-      var h = sec.section ? '<div class="r-item-section">[ ' + sec.section + ' ]</div>' : '';
+    return s.map(function(sec, si) {
+      /* Extra gap above the second half of a "For Two" combo — same separation
+         the thermal ticket gets from its blank line. */
+      var h = sec.section
+        ? '<div class="r-item-section"' + (si > 0 ? ' style="margin-top:14px"' : '') + '>[ ' + sec.section + ' ]</div>'
+        : '';
       h += sec.values.map(function(v) { return '<div class="r-item-line">- ' + v + '</div>'; }).join('');
       return h;
     }).join('');
@@ -398,12 +407,12 @@
   function customerReceiptHtml(order) {
     var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
     var items = order.items.map(function (i) {
-      return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
+      return '<div class="r-row r-item-name"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
         (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
         (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
     }).join('');
     var sub = order.subtotal != null ? order.subtotal : order.total;
-    return '<div class="receipt">' +
+    return '<div class="receipt size-' + textSize() + '">' +
       '<div class="r-center r-title">EDEN GRILL</div><div class="r-center">OKC</div><div class="r-center r-copy">STORE RECEIPT</div><hr>' +
       '<div class="r-row"><span>Order #</span><span>' + order.id.replace('ORD-', '') + '</span></div>' +
       '<div class="r-row"><span>Date</span><span>' + when + '</span></div>' +
@@ -419,11 +428,13 @@
   function kitchenTicketHtml(order) {
     var when = new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     var items = order.items.map(function (i) {
-      return '<div class="r-row"><span>' + i.quantity + 'x ' + i.name + '</span></div>' +
+      return '<div class="r-row r-item-name"><span>' + i.quantity + 'x ' + i.name + '</span></div>' +
         (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
         (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
     }).join('');
-    return '<div class="receipt kitchen-ticket">' +
+    /* Size class mirrors the thermal printer's food-size setting so the two
+       print paths (system/AirPrint dialog vs direct ESC/POS) look the same. */
+    return '<div class="receipt kitchen-ticket size-' + textSize() + '">' +
       '<div class="r-center r-title">KITCHEN TICKET</div><hr>' +
       '<div class="r-row"><span>Order #</span><span>' + order.id.replace('ORD-', '') + '</span></div>' +
       '<div class="r-row"><span>Time</span><span>' + when + '</span></div>' +
