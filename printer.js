@@ -93,46 +93,61 @@
     return lines.length ? lines : [''];
   }
 
+  const SIDE_RE = /side/i, DRINK_RE = /drink/i, TOPPING_RE = /topping/i;
+
+  /* Combos come with a side and a drink, and the kitchen wants those called
+     out by name and read in a fixed order — toppings, then side, then drink.
+     Plain items keep the bare "what was picked" list with no labels at all. */
+  function buildEntries(pairs, isCombo) {
+    if (!isCombo) return [{ label: null, values: pairs.map(function (p) { return p.value; }) }];
+    var toppings = [], other = [], side = [], drink = [];
+    pairs.forEach(function (p) {
+      if (SIDE_RE.test(p.label)) side.push(p.value);
+      else if (DRINK_RE.test(p.label)) drink.push(p.value);
+      else if (TOPPING_RE.test(p.label)) toppings.push(p.value);
+      else other.push(p.value);
+    });
+    var entries = [];
+    if (toppings.length) entries.push({ label: 'Toppings', values: toppings });
+    if (other.length) entries.push({ label: null, values: other });
+    if (side.length) entries.push({ label: 'Side', values: side });
+    if (drink.length) entries.push({ label: 'Drink', values: drink });
+    return entries;
+  }
+
   // Group item options: "For Two" combos split into Item 1 / Item 2 sections.
-  // The group label ("Pick Your Meat", "Toppings 2") is dropped entirely —
-  // staff just need what was picked, not which menu question it came from —
-  // so this returns a flat list of chosen values per section.
   function formatItemOptions(options) {
     if (!options || options.length === 0) return [];
-    var hasNumberedOptions = options.some(function(opt) {
-      var ci = opt.indexOf(': '); return ci > 0 && /\s\d+$/.test(opt.substring(0, ci).trim());
+    var pairs = options.map(function (opt) {
+      var ci = opt.indexOf(': ');
+      return ci === -1 ? { label: '', value: opt }
+                       : { label: opt.substring(0, ci).trim(), value: opt.substring(ci + 2).trim() };
     });
+    /* Only items that actually come with a side or a drink get the labelled,
+       reordered treatment — i.e. the combos. */
+    var isCombo = pairs.some(function (p) { return SIDE_RE.test(p.label) || DRINK_RE.test(p.label); });
+
+    var hasNumberedOptions = pairs.some(function (p) { return /\s\d+$/.test(p.label); });
     if (hasNumberedOptions) {
       var numberedBaseLabels = {};
-      options.forEach(function(opt) {
-        var ci = opt.indexOf(': '); if (ci === -1) return;
-        var label = opt.substring(0, ci).trim();
-        var m = label.match(/^(.+)\s(\d+)$/);
+      pairs.forEach(function (p) {
+        var m = p.label.match(/^(.+)\s(\d+)$/);
         if (m) numberedBaseLabels[m[1]] = true;
       });
       var shared = [], g1 = [], g2 = [];
-      options.forEach(function(opt) {
-        var ci = opt.indexOf(': '); if (ci === -1) return;
-        var label = opt.substring(0, ci).trim(), value = opt.substring(ci + 2).trim();
-        var m = label.match(/^(.+)\s(\d+)$/);
-        if (m && (m[2] === '1' || m[2] === '2')) {
-          (m[2] === '1' ? g1 : g2).push(value);
-        } else if (numberedBaseLabels[label]) {
-          g1.push(value);
-        } else {
-          shared.push(value);
-        }
+      pairs.forEach(function (p) {
+        var m = p.label.match(/^(.+)\s(\d+)$/);
+        var entry = { label: m ? m[1] : p.label, value: p.value };
+        if (m && (m[2] === '1' || m[2] === '2')) (m[2] === '1' ? g1 : g2).push(entry);
+        else if (numberedBaseLabels[p.label]) g1.push(entry);
+        else shared.push(entry);
       });
       return [
-        { section: 'Item 1', values: shared.concat(g1) },
-        { section: 'Item 2', values: shared.concat(g2) }
+        { section: 'Item 1', entries: buildEntries(shared.concat(g1), isCombo) },
+        { section: 'Item 2', entries: buildEntries(shared.concat(g2), isCombo) }
       ];
     }
-    var values = options.map(function(opt) {
-      var ci = opt.indexOf(': ');
-      return ci === -1 ? opt : opt.substring(ci + 2).trim();
-    });
-    return [{ section: null, values: values }];
+    return [{ section: null, entries: buildEntries(pairs, isCombo) }];
   }
 
   // Write formatted options to a Buffer for thermal printer (ESC/POS): one
@@ -143,14 +158,20 @@
     sections.forEach(function(sec, si) {
       /* Blank line between the two people's halves of a "For Two" combo, so
          they don't read as one continuous list. */
+      /* Bold state is left to the caller: the kitchen ticket runs bold from
+         top to bottom, the store receipt stays regular. */
       if (sec.section) {
         if (si > 0) b.line('');
-        b.raw(CMD.BOLD_ON).line(indent + '[ ' + sec.section + ' ]').raw(CMD.BOLD_OFF);
+        b.line(indent + '[ ' + sec.section + ' ]');
       }
-      /* Bold: what was chosen matters as much to the cook as the item name. */
-      b.raw(CMD.BOLD_ON);
-      sec.values.forEach(function(v) { b.line(indent + '- ' + v); });
-      b.raw(CMD.BOLD_OFF);
+      sec.entries.forEach(function(e) {
+        if (!e.label) { e.values.forEach(function(v) { b.line(indent + '- ' + v); }); return; }
+        /* One pick sits on the label's own line ("Side: Crinkle Fries");
+           several get the label as a heading so the line stays short. */
+        if (e.values.length === 1) { b.line(indent + '- ' + e.label + ': ' + e.values[0]); return; }
+        b.line(indent + '- ' + e.label + ':');
+        e.values.forEach(function(v) { b.line(indent + '    ' + v); });
+      });
     });
   }
 
@@ -164,7 +185,12 @@
       var h = sec.section
         ? '<div class="r-item-section"' + (si > 0 ? ' style="margin-top:14px"' : '') + '>[ ' + sec.section + ' ]</div>'
         : '';
-      h += sec.values.map(function(v) { return '<div class="r-item-line">- ' + v + '</div>'; }).join('');
+      h += sec.entries.map(function(e) {
+        if (!e.label) return e.values.map(function(v) { return '<div class="r-item-line">- ' + v + '</div>'; }).join('');
+        if (e.values.length === 1) return '<div class="r-item-line">- ' + e.label + ': ' + e.values[0] + '</div>';
+        return '<div class="r-item-line">- ' + e.label + ':</div>' +
+          e.values.map(function(v) { return '<div class="r-item-line" style="padding-left:24px">' + v + '</div>'; }).join('');
+      }).join('');
       return h;
     }).join('');
   }
@@ -190,11 +216,11 @@
     b.row('Name', order.customer && order.customer.name ? order.customer.name : '-');
     b.rule();
 
+    /* Store copy prints regular weight — it's a customer-facing receipt, not
+       something read across the kitchen. */
     order.items.forEach(function (it, idx) {
       if (idx > 0) b.line('');            /* separate one food item from the next */
-      /* Bold only — the price is column-aligned by character count, which
-         double-width text would throw off. */
-      b.raw(CMD.BOLD_ON).row(it.quantity + 'x ' + it.name, fmtMoney(it.total)).raw(CMD.BOLD_OFF);
+      b.row(it.quantity + 'x ' + it.name, fmtMoney(it.total));
       if (it.options && it.options.length) writeOptionsToBuffer(b, it.options);
       if (it.note) { b.line('  -> ' + it.note); }
     });
@@ -220,8 +246,10 @@
     const when = new Date(order.timestamp);
     const timeStr = when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    b.raw(CMD.INIT);
-    b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).raw(CMD.BOLD_ON).line('KITCHEN TICKET').raw(CMD.BOLD_OFF);
+    /* Bold goes on once here and stays on for the whole ticket — the cook
+       reads this from across the line. Only the character size changes below. */
+    b.raw(CMD.INIT).raw(CMD.BOLD_ON);
+    b.raw(CMD.ALIGN_CENTER).raw(CMD.SIZE_DOUBLE).line('KITCHEN TICKET');
     b.raw(CMD.SIZE_TALL).raw(CMD.ALIGN_LEFT).rule();
     b.row('Order #', order.id.replace('ORD-', ''));
     b.row('Time', timeStr);
@@ -233,16 +261,16 @@
        doesn't run to five lines each. */
     const size = itemSize();
     order.items.forEach(function (it) {
-      b.raw(size.cmd).raw(CMD.BOLD_ON);
+      b.raw(size.cmd);
       wrapText(it.quantity + 'x ' + it.name, Math.floor(cols() / size.scale)).forEach(function (l) { b.line(l); });
-      b.raw(CMD.BOLD_OFF).raw(CMD.SIZE_TALL);
+      b.raw(CMD.SIZE_TALL);
       if (it.options && it.options.length) writeOptionsToBuffer(b, it.options);
       if (it.note) { b.line('  -> ' + it.note); }
       b.line('');
     });
     b.rule();
     b.raw(CMD.ALIGN_CENTER).line('Fire when ready!');
-    b.raw(CMD.ALIGN_LEFT).feed(4).raw(CMD.CUT);
+    b.raw(CMD.BOLD_OFF).raw(CMD.ALIGN_LEFT).feed(4).raw(CMD.CUT);
     return b.toBytes();
   }
 
