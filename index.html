@@ -164,6 +164,7 @@ document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">')
     <div class="confirm-check">✓</div>
     <h2>Order Placed!</h2>
     <p id="confirmation-text"></p>
+    <button class="pay-btn" id="btn-print-both" style="display:none" onclick="printBothCopies()">Print Both Copies</button>
     <button class="pay-btn" id="btn-print-customer" style="display:none" onclick="printCustomerCopy()">Print Store Copy</button>
     <button class="pay-btn" id="btn-print-kitchen" style="display:none" onclick="printKitchenCopy()">Print Kitchen Copy</button>
     <button class="pay-btn" onclick="closeConfirmation()">Done</button>
@@ -716,6 +717,7 @@ async function placeOrder() {
   closeMobileDrawer();
   document.getElementById('confirmation-text').textContent =
     'Order #' + order.id.replace('ORD-','') + ' for ' + name + ' — Tap a button below to print. Hand store copy to guest, kitchen copy to cook.';
+  document.getElementById('btn-print-both').style.display = '';
   document.getElementById('btn-print-customer').style.display = '';
   document.getElementById('btn-print-kitchen').style.display = '';
   pendingKitchenOrder = order;
@@ -746,18 +748,39 @@ function closeConfirmation() {
 
 var pendingKitchenOrder = null;
 
+/* Chrome/Edge silently ignore window.print() if a previous print is still
+   tearing down, which is why printing the store copy and then immediately the
+   kitchen copy did nothing until the page was refreshed. Deferring the call a
+   beat lets the previous dialog finish releasing (and lets the new content lay
+   out first); the timestamp is a debounce against double-taps, deliberately
+   not a lock, so it can never wedge the way the browser's own state did. */
+var lastPrintAt = 0;
+function printReceiptHtml(html) {
+  var now = Date.now();
+  if (now - lastPrintAt < 1200) return;
+  lastPrintAt = now;
+  document.getElementById('print-area').innerHTML = html;
+  setTimeout(function () { window.print(); }, 250);
+}
+
 function printCustomerCopy() {
-  var order = pendingKitchenOrder;
-  if (!order) return;
-  document.getElementById('print-area').innerHTML = EdenPrinter.customerReceiptHtml(order);
-  window.print();
+  if (!pendingKitchenOrder) return;
+  printReceiptHtml(EdenPrinter.customerReceiptHtml(pendingKitchenOrder));
 }
 
 function printKitchenCopy() {
-  var order = pendingKitchenOrder;
-  if (!order) return;
-  document.getElementById('print-area').innerHTML = EdenPrinter.kitchenTicketHtml(order);
-  window.print();
+  if (!pendingKitchenOrder) return;
+  printReceiptHtml(EdenPrinter.kitchenTicketHtml(pendingKitchenOrder));
+}
+
+/* Both copies as a single job — one dialog, two pages. Avoids the
+   second-print problem entirely, so this is the button to reach for. */
+function printBothCopies() {
+  if (!pendingKitchenOrder) return;
+  printReceiptHtml(
+    '<div class="print-page">' + EdenPrinter.customerReceiptHtml(pendingKitchenOrder) + '</div>' +
+    '<div class="print-page">' + EdenPrinter.kitchenTicketHtml(pendingKitchenOrder) + '</div>'
+  );
 }
 
 /* ── Option Formatting ── */
