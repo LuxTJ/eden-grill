@@ -145,9 +145,12 @@
          they don't read as one continuous list. */
       if (sec.section) {
         if (si > 0) b.line('');
-        b.line(indent + '[ ' + sec.section + ' ]');
+        b.raw(CMD.BOLD_ON).line(indent + '[ ' + sec.section + ' ]').raw(CMD.BOLD_OFF);
       }
+      /* Bold: what was chosen matters as much to the cook as the item name. */
+      b.raw(CMD.BOLD_ON);
       sec.values.forEach(function(v) { b.line(indent + '- ' + v); });
+      b.raw(CMD.BOLD_OFF);
     });
   }
 
@@ -187,8 +190,11 @@
     b.row('Name', order.customer && order.customer.name ? order.customer.name : '-');
     b.rule();
 
-    order.items.forEach(function (it) {
-      b.row(it.quantity + 'x ' + it.name, fmtMoney(it.total));
+    order.items.forEach(function (it, idx) {
+      if (idx > 0) b.line('');            /* separate one food item from the next */
+      /* Bold only — the price is column-aligned by character count, which
+         double-width text would throw off. */
+      b.raw(CMD.BOLD_ON).row(it.quantity + 'x ' + it.name, fmtMoney(it.total)).raw(CMD.BOLD_OFF);
       if (it.options && it.options.length) writeOptionsToBuffer(b, it.options);
       if (it.note) { b.line('  -> ' + it.note); }
     });
@@ -407,9 +413,11 @@
   function customerReceiptHtml(order) {
     var when = new Date(order.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
     var items = order.items.map(function (i) {
-      return '<div class="r-row r-item-name"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
+      return '<div class="r-item">' +
+        '<div class="r-row r-item-name"><span>' + i.quantity + 'x ' + i.name + '</span><span>$' + Number(i.total).toFixed(2) + '</span></div>' +
         (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
-        (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
+        (i.note ? '<div class="r-note">' + i.note + '</div>' : '') +
+      '</div>';
     }).join('');
     var sub = order.subtotal != null ? order.subtotal : order.total;
     return '<div class="receipt size-' + textSize() + '">' +
@@ -428,9 +436,11 @@
   function kitchenTicketHtml(order) {
     var when = new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     var items = order.items.map(function (i) {
-      return '<div class="r-row r-item-name"><span>' + i.quantity + 'x ' + i.name + '</span></div>' +
+      return '<div class="r-item">' +
+        '<div class="r-row r-item-name"><span>' + i.quantity + 'x ' + i.name + '</span></div>' +
         (i.options && i.options.length ? '<div class="r-opts">' + formatItemOptionsHtml(i.options) + '</div>' : '') +
-        (i.note ? '<div class="r-note">' + i.note + '</div>' : '');
+        (i.note ? '<div class="r-note">' + i.note + '</div>' : '') +
+      '</div>';
     }).join('');
     /* Size class mirrors the thermal printer's food-size setting so the two
        print paths (system/AirPrint dialog vs direct ESC/POS) look the same. */

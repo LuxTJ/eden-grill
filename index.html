@@ -36,16 +36,24 @@ document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">')
      .receipt .r-copy { font-weight: 700; margin: 4px 0; }
      .receipt hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
      .receipt .r-row { display: flex; justify-content: space-between; gap: 8px; }
-     .receipt .r-opts { padding-left: 8px; font-size: 14px; }
-     .receipt .r-note { padding-left: 8px; font-size: 14px; font-style: italic; }
+     .receipt .r-opts { padding-left: 8px; font-size: 18px; }
+     .receipt .r-note { padding-left: 8px; font-size: 16px; font-style: italic; font-weight: 700; }
      .receipt .r-total { font-weight: 700; font-size: 18px; }
      .receipt .r-foot { text-align: center; margin-top: 8px; font-size: 14px; }
-     .receipt .r-item-section { font-weight: 700; margin: 6px 0 2px; font-size: 15px; }
-     .receipt .r-item-line { padding-left: 8px; font-size: 14px; line-height: 1.45; }
+     .receipt .r-item-section { font-weight: 700; margin: 6px 0 2px; font-size: 17px; }
+     /* The chosen options are as important to the cook as the item name, so
+        they're bold too, and scale with the same food-size setting. */
+     .receipt .r-item-line { padding-left: 8px; font-size: 18px; font-weight: 700; line-height: 1.45; }
+     .receipt.size-normal .r-item-line { font-size: 15px; }
+     .receipt.size-large .r-item-line { font-size: 18px; }
+     .receipt.size-xl .r-item-line { font-size: 22px; }
      /* Food name lines, sized by the Printer settings food-size choice. This is
         the system/AirPrint print path — the ESC/POS size commands don't apply
         here, so the same setting has to be honoured separately in CSS. */
-     .receipt .r-item-name { font-weight: 700; font-size: 22px; line-height: 1.25; margin-top: 6px; }
+     /* Each food item is its own block, split from the next by a gap and a
+        dotted rule — back to back they ran together into one list. */
+     .receipt .r-item + .r-item { margin-top: 12px; padding-top: 10px; border-top: 1px dotted #999; }
+     .receipt .r-item-name { font-weight: 700; font-size: 22px; line-height: 1.25; margin-bottom: 2px; }
      .receipt.size-normal .r-item-name { font-size: 17px; }
      .receipt.size-large .r-item-name { font-size: 22px; }
      .receipt.size-xl .r-item-name { font-size: 30px; }
