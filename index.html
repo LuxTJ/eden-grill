@@ -1087,7 +1087,7 @@ async function renderReports() {
   html += '<div class="report-section"><h3>Today Orders</h3>';
   todayOrders.slice().reverse().forEach(function(o) {
     var when = new Date(o.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span><button class="report-del-btn" onclick="deleteOrder(' + JSON.stringify(o.id) + ')" title="Delete order">✕</button></div>';
+    html += '<div class="report-order"><div class="report-order-head"><span>#' + o.id.replace('ORD-','') + '</span><span>' + o.customer.name + '</span><span>' + when + '</span><button class="report-del-btn" onclick="deleteOrder(&quot;' + o.id + '&quot;)" title="Delete order">✕</button></div>';
     html += '<div class="report-order-items">' + (o.items || []).map(function(it) { return it.quantity + 'x ' + it.name; }).join(', ') + '</div></div>';
   });
   html += '</div>';
