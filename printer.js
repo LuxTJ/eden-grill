@@ -24,6 +24,23 @@
   }
   function setCols(n) { localStorage.setItem(WIDTH_KEY, String(n === 32 ? 32 : n === 64 ? 64 : 48)); }
 
+  /* How big the food item names print on the kitchen ticket. GS ! n packs a
+     width multiplier in the high nibble and height in the low nibble, so
+     0x11 = 2x/2x and 0x22 = 3x/3x. Adjustable from Printer settings because
+     what's readable depends on the printer and how far away the cook stands. */
+  const TEXT_SIZE_KEY = 'edenGrillItemTextSize';
+  const ITEM_SIZES = {
+    normal: { cmd: [GS, 0x21, 0x01], scale: 1 },   /* tall only, full width  */
+    large:  { cmd: [GS, 0x21, 0x11], scale: 2 },   /* 2x wide, 2x tall       */
+    xl:     { cmd: [GS, 0x21, 0x22], scale: 3 },   /* 3x wide, 3x tall       */
+  };
+  function textSize() {
+    const v = localStorage.getItem(TEXT_SIZE_KEY);
+    return ITEM_SIZES[v] ? v : 'large';
+  }
+  function setTextSize(v) { localStorage.setItem(TEXT_SIZE_KEY, ITEM_SIZES[v] ? v : 'large'); }
+  function itemSize() { return ITEM_SIZES[textSize()]; }
+
   function sanitize(s) {
     return String(s)
       .replace(/[—–]/g, '-')
@@ -54,6 +71,27 @@
   }
 
   function fmtMoney(n) { return '$' + Number(n).toFixed(2); }
+
+  /* Double/triple-width characters fit proportionally fewer per line, so long
+     item names have to be broken by hand — left to the printer they wrap
+     mid-word, which is exactly what the kitchen struggles to read. */
+  function wrapText(s, width) {
+    const words = sanitize(s).split(/\s+/).filter(Boolean);
+    const lines = [];
+    let cur = '';
+    words.forEach(function (w) {
+      while (w.length > width) {           /* a single word longer than the line */
+        if (cur) { lines.push(cur); cur = ''; }
+        lines.push(w.slice(0, width));
+        w = w.slice(width);
+      }
+      if (!cur) cur = w;
+      else if ((cur + ' ' + w).length <= width) cur += ' ' + w;
+      else { lines.push(cur); cur = w; }
+    });
+    if (cur) lines.push(cur);
+    return lines.length ? lines : [''];
+  }
 
   // Group item options: "For Two" combos split into Item 1 / Item 2 sections.
   // The group label ("Pick Your Meat", "Toppings 2") is dropped entirely —
@@ -175,8 +213,14 @@
     b.row('Name', order.customer && order.customer.name ? order.customer.name : '-');
     b.rule();
 
+    /* Food names print at the configured size (default 2x wide/tall); the
+       options underneath stay at normal width so a long list of toppings
+       doesn't run to five lines each. */
+    const size = itemSize();
     order.items.forEach(function (it) {
-      b.raw(CMD.BOLD_ON).line(it.quantity + 'x ' + it.name).raw(CMD.BOLD_OFF);
+      b.raw(size.cmd).raw(CMD.BOLD_ON);
+      wrapText(it.quantity + 'x ' + it.name, Math.floor(cols() / size.scale)).forEach(function (l) { b.line(l); });
+      b.raw(CMD.BOLD_OFF).raw(CMD.SIZE_TALL);
       if (it.options && it.options.length) writeOptionsToBuffer(b, it.options);
       if (it.note) { b.line('  -> ' + it.note); }
       b.line('');
@@ -410,6 +454,12 @@
     onChange: function (fn) { listeners.push(fn); },
     getCols: cols,
     setCols: function (n) { setCols(n); notify(); },
+    getTextSize: textSize,
+    setTextSize: function (v) { setTextSize(v); notify(); },
+    /* Exposed so the exact ESC/POS byte stream can be inspected without a
+       physical printer attached. */
+    buildCustomerReceipt: buildCustomerReceipt,
+    buildKitchenTicket: buildKitchenTicket,
     getBridge: function () { return bridge; },
     isNativePlatform: function () { return isNative; },
   };

@@ -173,10 +173,17 @@ document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">')
       <button class="printer-action-btn danger" id="btn-disc" onclick="disconnectPrinter()">Disconnect</button>
       <button class="printer-action-btn" id="btn-test" onclick="testPrint()">Print Test</button>
       <div class="printer-msg" id="printer-msg"></div>
+      <h3>Paper Width</h3>
       <div class="paper-select">
         <button id="paper-58" onclick="setPaper(32)">58mm</button>
         <button id="paper-80" onclick="setPaper(48)">80mm</button>
         <button id="paper-4x6" onclick="setPaper(64)">4x6"</button>
+      </div>
+      <h3>Kitchen Ticket Food Size</h3>
+      <div class="paper-select">
+        <button id="size-normal" onclick="setTextSize('normal')">Normal</button>
+        <button id="size-large" onclick="setTextSize('large')">Large</button>
+        <button id="size-xl" onclick="setTextSize('xl')">Extra Large</button>
       </div>
       <p class="printer-note" id="printer-support-note"></p>
     </div>
@@ -854,6 +861,23 @@ function refreshPrinterUI() {
   if (btnDisc) btnDisc.disabled = !st.connected;
   var note = document.getElementById('printer-support-note');
   if (note) note.textContent = st.connected ? 'Connected. Both receipts print automatically on thermal.' : 'AirPrint ready — receipts print via system dialog on Pay & Print.';
+
+  /* Mark which paper width and food size are active — the .sel styling existed
+     but nothing had ever applied it, so both rows always looked unselected. */
+  if (window.EdenPrinter) {
+    var paperIds = { 32: 'paper-58', 48: 'paper-80', 64: 'paper-4x6' };
+    var sizeIds = { normal: 'size-normal', large: 'size-large', xl: 'size-xl' };
+    var selPaper = paperIds[EdenPrinter.getCols()];
+    var selSize = sizeIds[EdenPrinter.getTextSize ? EdenPrinter.getTextSize() : 'large'];
+    Object.keys(paperIds).forEach(function (k) {
+      var el = document.getElementById(paperIds[k]);
+      if (el) el.classList.toggle('sel', paperIds[k] === selPaper);
+    });
+    Object.keys(sizeIds).forEach(function (k) {
+      var el = document.getElementById(sizeIds[k]);
+      if (el) el.classList.toggle('sel', sizeIds[k] === selSize);
+    });
+  }
 }
 
 function openPrinter() { document.getElementById('printer-modal').classList.add('active'); printerMsg(''); refreshPrinterUI(); }
@@ -886,6 +910,7 @@ async function disconnectPrinter() {
 }
 
 function setPaper(cols) { if (window.EdenPrinter) EdenPrinter.setCols(cols); refreshPrinterUI(); }
+function setTextSize(v) { if (window.EdenPrinter) EdenPrinter.setTextSize(v); refreshPrinterUI(); }
 
 async function testPrint() {
   var testOrder = {
