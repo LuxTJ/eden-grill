@@ -17,6 +17,7 @@
    itself reloads. Stamping a fresh query string on every load makes each one
    look like a brand-new URL, so nothing has stale bytes to hand back. */
 document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">');
+document.write('<script src="analytics.js?v=' + Date.now() + '"><\/script>');
 </script>
 <style>
    #print-area { display: none; }
